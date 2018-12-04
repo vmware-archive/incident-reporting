@@ -12,6 +12,7 @@ class GetLogLine extends React.Component {
   };
   
   setValue = value => {
+    // eslint-disable-next-line
     const { drizzle, drizzleState } = this.props;
     const contract = drizzle.contracts.IncidentLog;
 
@@ -37,16 +38,16 @@ class GetLogLine extends React.Component {
 
             // if it exists, then we display its value
             return (
-                <div>
+                <div>Incident number to look up?
                     <input type="text" onKeyDown={this.handleKeyDown} />
                     <p>address: {address}</p>
-                    <p>message: {message}</p>
+                    <p>incident: {message}</p>
                     <p>time: {time}</p>
                 </div>);
 
         } else {
             return (
-                <div>
+                <div>Incident number to look up?
                     <input type="text" onKeyDown={this.handleKeyDown} />
                 </div>);
         }

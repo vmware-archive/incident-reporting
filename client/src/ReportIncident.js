@@ -41,7 +41,7 @@ class ReportIncident extends React.Component {
 
   render() {
     return (
-      <div>
+      <div>What is the incident?
         <input type="text" onKeyDown={this.handleKeyDown} />
         <div>{this.getTxStatus()}</div>
       </div>

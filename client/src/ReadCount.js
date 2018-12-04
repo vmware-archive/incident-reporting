@@ -24,7 +24,9 @@ class ReadString extends React.Component {
     const myString = IncidentLog.getCount[this.state.dataKey];
 
     // if it exists, then we display its value
-    return <p>My stored string: {myString && myString.value}</p>;
+    return <div>
+      Current number of incidents: {myString && myString.value}
+      </div>;
   }
 }
 

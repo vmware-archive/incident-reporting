@@ -20,3 +20,21 @@ On detection of a security incident, a log entry should be made.
 * Ssh access to VM running the app
 * Breach of encryption key security
 * AppDefense identifies a problem
+
+Setting up and running
+
+* install npm
+
+``` bash
+
+install npm
+npm install truffle -g
+npm install solc@0.4.24+commit.e67f0147.Emscripten.clang
+npm install -g solium
+npm install -g ganache-cli
+npm install drizzle
+start ganach ui
+cd client
+npm start
+
+```
