@@ -1,2 +1,9 @@
 build/
 node_modules/
+.DS_Store
+IncidentLog.go
+client
+incident-chain
+truffle.js
+env
+server

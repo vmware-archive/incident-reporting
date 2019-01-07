@@ -1,0 +1,42 @@
+{{define "main"}}
+
+<html>
+<head>
+    <link rel="stylesheet" href="https://unpkg.com/@clr/ui@1.0.3/clr-ui.min.css" />
+
+</head>
+
+<body>
+    <div class="main-container">
+            <header class="header header-6">
+                <div class="branding">
+                    <a href="/" class="nav-link">
+                        <clr-icon shape="vm-bug"></clr-icon>
+                        <span class="title">Incident Reporter</span>
+                    </a>
+                </div>
+            </header>
+            <nav class="subnav">
+
+                <ul class="nav">
+                    <a class="nav-link active" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/log">Report an Incident</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/logs">All Incidents</a>
+                </li>
+            </nav>
+            <div class="content-container">
+                <div class="content-area">
+{{ . }}
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>
+{{end}}

@@ -11,13 +11,14 @@
  *     gasPrice: 10000000000,
  *   },
  */
+Web3 = require('web3');
 
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
 
   networks: {
-    development: {
+    dev: {
       host: "localhost",
       port: 8545,
       network_id: "*" // Match any network id
@@ -26,6 +27,12 @@ module.exports = {
       host: "localhost",
       port: 7545,
       network_id: '*'
+    },
+    vmware: {
+      network_id: "*",
+      provider: () => {
+        return new Web3.providers.HttpProvider("https://dev@blockchain.local:XXXXXXXX@mgmt.blockchain.vmware.com/blockchains/b20bef33-b35d-44a6-b5b9-15423a25d31f/api/concord/eth");
+      }
     }
   }
 };
