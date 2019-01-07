@@ -74,16 +74,16 @@ func main() {
 		</p>
 		`))
 	})
-	e.GET("/log", reportIncidentSetup)
+	e.GET("/log", reportIncidentForm)
 	e.POST("/log", reportIncident)
 	e.GET("/log/:id", getIncident)
 	e.GET("/logs", getIncidents)
 
-	e.Logger.Fatal(e.Start(":1234"))
+	e.Logger.Fatal(e.Start(":80"))
 }
 
-// e.GET("/log", reportIncidentSetup)
-func reportIncidentSetup(c echo.Context) error {
+// e.GET("/log", reportIncidentForm)
+func reportIncidentForm(c echo.Context) error {
 	return c.Render(http.StatusOK, "main", template.HTML(`
 		<h2>Report an Incident</h2>
 	    <form method="POST">
@@ -108,17 +108,6 @@ func reportIncident(c echo.Context) error {
 		log.Fatalf("Failed to get count of incidents: %v", err)
 	}
 	return c.Redirect(http.StatusMovedPermanently, "/log/"+strconv.FormatInt(id, 10))
-
-	// return c.Render(http.StatusOK, "main", template.HTML(`Go to <a href="/log/`+strconv.FormatInt(id, 10)+`">the log entry</a>`))
-}
-
-func getIndexLargestIncident() (int64, error) {
-	id, err := ilog.GetCount(&bind.CallOpts{})
-	if err != nil {
-		return 0, fmt.Errorf("Failed to get count of incidents: %v", err)
-	}
-	count := id.Sub(id, big.NewInt(1))
-	return count.Int64(), nil
 }
 
 // e.GET("/log/:id", getIncident)
@@ -128,13 +117,7 @@ func getIncident(c echo.Context) error {
 	if err != nil {
 		log.Fatalf("Failed to convert Atoi: %v", err)
 	}
-
-	sender, message, timestamp, err := ilog.GetIncident(&bind.CallOpts{}, big.NewInt(id))
-	incident := Incident{
-		Reporter:  sender.String(),
-		Message:   message,
-		Timestamp: timestamp.Uint64(),
-	}
+	incident, err := lookupIncident(id)
 	if err != nil {
 		log.Printf("Failed to get an incident with id %d: %v", id, err)
 		return c.Render(http.StatusGone, "main", template.HTML("<p>There does not exist an incident with id "+c.Param("id")+"</p>"))
@@ -155,19 +138,36 @@ func getIncidents(c echo.Context) error {
 
 	log.Printf("got %v incidents", count)
 	for ; index < count; index++ {
-		sender, message, timestamp, err := ilog.GetIncident(&bind.CallOpts{}, big.NewInt(index))
-		i := Incident{
-			Reporter:  sender.String(),
-			Message:   message,
-			Timestamp: timestamp.Uint64(),
-		}
-		incidents = append(incidents, i)
+		i, err := lookupIncident(index)
 		if err != nil {
 			log.Printf("Failed to get an incident with id %d: %v", index, err)
 			return c.Render(http.StatusGone, "main", template.HTML("<p>There does not exist an incident with id "+c.Param("id")+"</p>"))
 		}
-
+		incidents = append(incidents, i)
 	}
-	log.Printf("%v", incidents)
+
 	return c.Render(http.StatusOK, "incidents", incidents)
+}
+
+func getIndexLargestIncident() (int64, error) {
+	id, err := ilog.GetCount(&bind.CallOpts{})
+	if err != nil {
+		return 0, fmt.Errorf("Failed to get count of incidents: %v", err)
+	}
+	count := id.Sub(id, big.NewInt(1))
+	return count.Int64(), nil
+}
+
+func lookupIncident(id int64) (Incident, error) {
+	incident := Incident{}
+
+	sender, message, timestamp, err := ilog.GetIncident(&bind.CallOpts{}, big.NewInt(id))
+	if err != nil {
+		return incident, fmt.Errorf("Failed to get an incident with id %d: %v", id, err)
+	}
+
+	incident.Reporter = sender.String()
+	incident.Message = message
+	incident.Timestamp = timestamp.Uint64()
+	return incident, nil
 }
