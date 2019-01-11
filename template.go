@@ -9,9 +9,9 @@ import (
 
 // Incident is an entry on the IncidentLog blockchain
 type Incident struct {
-	Reporter  string // what public id reported this incident?
-	Message   string // log message for the incident
-	Timestamp uint64
+	Reporter  string `json:"Reporter" form:"Reporter" query:"Reporter"` // what public id reported this incident?
+	Message   string `json:"Message" form:"Message" query:"Message"`    // log message for the incident
+	Timestamp uint64 `json:"Timestamp" form:"Timestamp" query:"Timestamp"`
 }
 
 // Template is a pointer to html templates

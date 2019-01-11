@@ -21,20 +21,31 @@ On detection of a security incident, a log entry should be made.
 * Breach of encryption key security
 * AppDefense identifies a problem
 
-Setting up and running
+Dependencies
 
 * install npm
+* install go
+* install go-ethereum https://geth.ethereum.org/install/
 
 ``` bash
+npm install -g truffle
+npm install
 
-install npm
-npm install truffle -g
-npm install solc@0.4.24+commit.e67f0147.Emscripten.clang
-npm install -g solium
-npm install -g ganache-cli
-npm install drizzle
-start ganach ui
-cd client
-npm start
+# create a new account and keys.
+# Save the passhrase and account id for next steps
+geth account new
+geth account list
+
+
+# deploy the contracts
+truffle deploy --network vmware --reset
+
+export CLIENT_PASSPHRASE=password_for_account_created_above
+export CLIENT_CONTRACT_ADDRESS=0xdb3d71898f878bc5e6ef6e0de985a55ca483c0c0 # address for the deployed contract
+export CLIENT_URL=mgmt.blockchain.vmware.com/blockchains/xxxxx/api/concord/eth
+export CLIENT_USER=dev@blockchain.local
+export CLIENT_PASSWORD=xxxxx
+export CLIENT_KEYFILE=/Users/xxx/Library/Ethereum/keystore/UTC--2019-01-03T19-49-59.140692000Z--fe00bb37a56282d33680542ae1cd6763660b4812
+
 
 ```

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-	"math/big"
 	"net/http"
 	"os"
 	"strconv"
@@ -75,99 +74,50 @@ func main() {
 		`))
 	})
 	e.GET("/log", reportIncidentForm)
-	e.POST("/log", reportIncident)
-	e.GET("/log/:id", getIncident)
+	e.POST("/log", reportIncidentHTML)
+	e.GET("/log/:id", getIncidentHTML)
 	e.GET("/logs", getIncidents)
+
+	e.GET("/rest/log/:id", getIncidentJSON)
+	e.POST("/rest/log", reportIncidentJSON)
 
 	e.Logger.Fatal(e.Start(":80"))
 }
 
-// e.GET("/log", reportIncidentForm)
-func reportIncidentForm(c echo.Context) error {
-	return c.Render(http.StatusOK, "main", template.HTML(`
-		<h2>Report an Incident</h2>
-	    <form method="POST">
-  		What happened:<br>
-		<input type="text" name="message">
-		<button class="btn btn-primary">Report</button>
-		</form>`))
-}
-
-// e.POST("/log", reportIncident)
-func reportIncident(c echo.Context) error {
-	// incident message to report
-	message := c.FormValue("message")
-
-	_, err := ilog.ReportIncident(transactor, transactor.From, message)
+func reportIncident(c echo.Context) (Incident, error) {
+	// collect input as an incident
+	incident, err := bindInput(c)
 	if err != nil {
-		log.Fatalf("Failed to report an incident: %v", err)
+		return incident, err
 	}
 
-	id, err := getIndexLargestIncident()
+	// file the report
+	_, err = ilog.ReportIncident(transactor, common.HexToAddress(incident.Reporter), incident.Message)
 	if err != nil {
-		log.Fatalf("Failed to get count of incidents: %v", err)
+		log.Printf("Failed to report an incident: %v", err)
+		return incident, err
 	}
-	return c.Redirect(http.StatusMovedPermanently, "/log/"+strconv.FormatInt(id, 10))
+
+	// get the latest report and return it for response
+	newIncident, err := lookupLatestIncident()
+	if err != nil {
+		return newIncident, err
+	}
+
+	return newIncident, nil
 }
 
-// e.GET("/log/:id", getIncident)
-func getIncident(c echo.Context) error {
+func getIncident(c echo.Context) (Incident, error) {
 	// Incident ID from path `log/:id`
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		log.Fatalf("Failed to convert Atoi: %v", err)
+		log.Print(err)
+		return Incident{}, err
 	}
 	incident, err := lookupIncident(id)
 	if err != nil {
-		log.Printf("Failed to get an incident with id %d: %v", id, err)
-		return c.Render(http.StatusGone, "main", template.HTML("<p>There does not exist an incident with id "+c.Param("id")+"</p>"))
+		return Incident{}, err
 	}
 
-	return c.Render(http.StatusOK, "incident", incident)
-}
-
-// e.GET("/log/:id", getIncidents)
-func getIncidents(c echo.Context) error {
-	var incidents []Incident
-	var index int64
-
-	count, err := getIndexLargestIncident()
-	if err != nil {
-		log.Fatalf("Failed to get count of incidents: %v", err)
-	}
-
-	log.Printf("got %v incidents", count)
-	for ; index < count; index++ {
-		i, err := lookupIncident(index)
-		if err != nil {
-			log.Printf("Failed to get an incident with id %d: %v", index, err)
-			return c.Render(http.StatusGone, "main", template.HTML("<p>There does not exist an incident with id "+c.Param("id")+"</p>"))
-		}
-		incidents = append(incidents, i)
-	}
-
-	return c.Render(http.StatusOK, "incidents", incidents)
-}
-
-func getIndexLargestIncident() (int64, error) {
-	id, err := ilog.GetCount(&bind.CallOpts{})
-	if err != nil {
-		return 0, fmt.Errorf("Failed to get count of incidents: %v", err)
-	}
-	count := id.Sub(id, big.NewInt(1))
-	return count.Int64(), nil
-}
-
-func lookupIncident(id int64) (Incident, error) {
-	incident := Incident{}
-
-	sender, message, timestamp, err := ilog.GetIncident(&bind.CallOpts{}, big.NewInt(id))
-	if err != nil {
-		return incident, fmt.Errorf("Failed to get an incident with id %d: %v", id, err)
-	}
-
-	incident.Reporter = sender.String()
-	incident.Message = message
-	incident.Timestamp = timestamp.Uint64()
 	return incident, nil
 }
