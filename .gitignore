@@ -4,6 +4,7 @@ node_modules/
 IncidentLog.go
 client
 incident-chain
+incident-reporting
 truffle.js
 env
 server

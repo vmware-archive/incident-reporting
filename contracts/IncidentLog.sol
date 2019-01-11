@@ -1,4 +1,4 @@
-pragma solidity ^0.5.0;
+pragma solidity ^0.4.24;
 
 /// @title A log for recording incidents
 /// @author Tom Scanlan
