@@ -4,7 +4,6 @@
   "private": true,
   "dependencies": {
     "ganache-cli": "^6.2.3",
-    "solc": "^0.5.2",
     "solium": "^1.2.1",
     "truffle": "^4.1.14",
     "web3": "^0.20.7"

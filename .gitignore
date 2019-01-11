@@ -8,3 +8,4 @@ incident-reporting
 truffle.js
 env
 server
+generate/

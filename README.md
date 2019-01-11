@@ -27,6 +27,7 @@ This only needs to be done once for a demo.  Save the ID for IncidentLog that is
 
 ## Install the dependencies:
 
+* install solidity `brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb`
 * install npm
 * install go
 * install go-ethereum from https://geth.ethereum.org/install/
