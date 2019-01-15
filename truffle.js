@@ -28,10 +28,11 @@ module.exports = {
       port: 7545,
       network_id: '*'
     },
-    vmware: {
+    production: {
       network_id: "*",
       provider: () => {
-        return new Web3.providers.HttpProvider("https://dev@blockchain.local:XXXXXXXX@mgmt.blockchain.vmware.com/blockchains/b20bef33-b35d-44a6-b5b9-15423a25d31f/api/concord/eth");
+        console.log("using url" + process.env.PRODUCTION_URL)
+        return new Web3.providers.HttpProvider(process.env.PRODUCTION_URL);
       }
     }
   }
