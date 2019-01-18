@@ -11,6 +11,7 @@ contract IncidentLog {
         uint timestamp;
     }
 
+    // This event will fire each time an incident is reported
     event FireIncident (
         address reporter,
         string message,
@@ -19,7 +20,7 @@ contract IncidentLog {
 
     // A dynamically-sized array of `Incidents` structs.
     Incident[] public incidents;
-  
+
     function reportIncident (address reporter, string memory message) public {
         uint timestamp = now;
         incidents.push(

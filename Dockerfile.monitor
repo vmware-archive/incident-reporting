@@ -1,0 +1,10 @@
+FROM golang:1.11.4
+
+WORKDIR /go/src/app
+COPY monitor/ .
+
+RUN go get -d -v ./... && \
+    go generate -v && \
+    go build -v
+
+CMD ["app"]
