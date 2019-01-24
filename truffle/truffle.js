@@ -16,6 +16,7 @@ Web3 = require('web3');
 module.exports = {
   // See <http://truffleframework.com/docs/advanced/configuration>
   // to customize your Truffle configuration!
+  contracts_directory: "contracts",
 
   networks: {
     dev: {
@@ -31,7 +32,6 @@ module.exports = {
     production: {
       network_id: "*",
       provider: () => {
-        console.log("using url" + process.env.PRODUCTION_URL)
         return new Web3.providers.HttpProvider(process.env.PRODUCTION_URL);
       }
     }

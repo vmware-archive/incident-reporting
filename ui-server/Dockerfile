@@ -2,6 +2,7 @@ FROM golang:1.11.4
 
 WORKDIR /go/src/app
 COPY *.go /go/src/app/
+COPY public/ /go/src/app/public/
 
 RUN apt-get update && \
    apt-get install -y xz-utils
@@ -83,4 +84,4 @@ RUN go generate -v
 RUN go build -v
 
 EXPOSE 80
-CMD ["app"]
+CMD ["./app"]  

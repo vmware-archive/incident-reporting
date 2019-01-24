@@ -9,3 +9,5 @@ truffle.js
 env
 server
 generate/
+monitor/monitor
+ui-server/ui-server
