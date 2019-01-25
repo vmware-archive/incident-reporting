@@ -1,3 +1,23 @@
+## must create secret with
+## 
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    build.knative.dev/docker-0: https://index.docker.io
+  name: basic-user-pass
+type: kubernetes.io/basic-auth
+stringData:
+  username: cleartext-username
+  password: cleartext-password
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: build-bot
+secrets:
+  - name: basic-user-pass
 ---
 apiVersion: pipeline.knative.dev/v1alpha1
 kind: PipelineResource
@@ -58,6 +78,7 @@ kind: TaskRun
 metadata:
   name: build-incident-reporting-ui-from-git-task-run
 spec:
+  serviceAccount: build-bot
   taskRef:
     name: build-docker-image-from-git-source
   trigger:
