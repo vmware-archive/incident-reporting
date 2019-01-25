@@ -75,7 +75,6 @@ RUN npm install -g solc@0.4.24 && \
   ln -s /usr/local/bin/solcjs /bin/solc
 
 COPY contracts /go/src/app/contracts
-COPY migrations /go/src/app/migrations
 
 RUN go get -d -v ./... && \
   cd /go/src/github.com/ethereum/go-ethereum && \

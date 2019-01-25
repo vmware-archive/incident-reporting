@@ -1,21 +1,4 @@
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: incident-reporting-ui
-    release: v1
-  name: incident-reporting-ui-svc
-spec:
-  ports:
-  - port: 80
-    protocol: TCP
-    targetPort: 80
-  selector:
-    app: incident-reporting-ui
-    release: v1
-  sessionAffinity: None
-  type: ClusterIP
+
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -61,8 +44,8 @@ spec:
         release: v1
     spec:
       containers:
-      - image: docker.io/tompscanlan/ui-server:1.1
-        name: ui-server
+      - image: docker.io/tompscanlan/incident-reporting-ui:1.1
+        name: incident-reporting-ui
         # command:
         #   - sleep
         #   - "1000"
@@ -102,37 +85,17 @@ spec:
           - name: CLIENT_KEYFILE
             value: /keyfile/UTC--2019-01-03T19-49-59.140692000Z--fe00bb37a56282d33680542ae1cd6763660b4812
           - name: CLIENT_CONTRACT_ADDRESS
-            value: "0x40565998749204dd8bb74e5db51c77bd3c5f0931"
+            value: "0xc3c293c86cf2738c515e9bbd39c55927c83ea210"
+          - name: CLIENT_REDIS_PASSWORD
+            valueFrom:
+              secretKeyRef:
+               name: incident-log-redis
+               key: redis-password
+          - name: CLIENT_REDIS_HOST
+            value: incident-log-redis
+
       volumes:
         - name: ethereum-keyfile-volume
           configMap: 
             name: ethereum-keyfile
       restartPolicy: Always
----
-apiVersion: extensions/v1beta1
-kind: Ingress
-metadata:
-  annotations:
-    # certmanager.k8s.io/issuer: letsencrypt-stage
-    ingress.kubernetes.io/force-ssl-redirect: "false"
-    ingress.kubernetes.io/proxy-body-size: "0"
-    # ingress.kubernetes.io/ssl-redirect: "true"
-    kubernetes.io/ingress.class: contour
-    # kubernetes.io/tls-acme: "true"
-  labels:
-    app: incident-reporting
-    release: v1
-  name: incident-reporting-ui-ingress
-spec:
-  rules:
-  - host: incident.demo.butterhead.net
-    http:
-      paths:
-      - backend:
-          serviceName: incident-reporting-ui-svc
-          servicePort: 80
-        path: /
-  # tls:
-  # - hosts:
-  #   - incident.demo.butterhead.net
-  #   secretName: incident-reporting-ui-cert

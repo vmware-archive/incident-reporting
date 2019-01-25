@@ -1,0 +1,28 @@
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  annotations:
+    # certmanager.k8s.io/issuer: letsencrypt-stage
+    ingress.kubernetes.io/force-ssl-redirect: "false"
+    ingress.kubernetes.io/proxy-body-size: "0"
+    # ingress.kubernetes.io/ssl-redirect: "true"
+    kubernetes.io/ingress.class: contour
+    # kubernetes.io/tls-acme: "true"
+  labels:
+    app: incident-reporting
+    release: v1
+  name: incident-reporting-ui-ingress
+spec:
+  rules:
+  - host: incident.demo.butterhead.net
+    http:
+      paths:
+      - backend:
+          serviceName: incident-reporting-ui-svc
+          servicePort: 80
+        path: /
+  # tls:
+  # - hosts:
+  #   - incident.demo.butterhead.net
+  #   secretName: incident-reporting-ui-cert
