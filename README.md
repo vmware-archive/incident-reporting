@@ -21,41 +21,27 @@ On detection of a security incident, a log entry should be made.
 * Breach of encryption key security
 * AppDefense identifies a problem
 
+## Install the dependencies
+
+* Docker
+
+## Build the ui and truffle containers
+
+    make
+
 ## Deploy the contracts
 
-This only needs to be done once for a demo.  Save the ID for IncidentLog that is output by the deploy below.  You'll need it when running the server.
+    export PRODUCTION_URL=https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth
+    docker run -it -e PRODUCTION_URL incident-reporting-truffle truffle deploy --network production --reset
 
-## Install the dependencies:
-
-* install solidity `brew install https://raw.githubusercontent.com/ethereum/homebrew-ethereum/9599ce8371d9de039988f89ed577460e58a0f56a/solidity.rb`
-* install npm
-* install go
-* install go-ethereum from https://geth.ethereum.org/install/
+Output:
 
 ``` bash
-npm install -g truffle@4.1.14
-```
-
-edit truffle.js to add a section like:
-
-``` javascript
-    vmware: {
-      network_id: "*",
-      provider: () => {
-        return new Web3.providers.HttpProvider("https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth");
-      }
-```
-
-Then run the deploy
-``` bash
-truffle deploy --network vmware --reset
-
-... output ...
 Compiling ./contracts/IncidentLog.sol...
 Compiling ./contracts/Migrations.sol...
 Writing artifacts to ./build/contracts
 
-Using network 'vmware'.
+Using network 'production'.
 
 Running migration: 1_initial_migration.js
   Deploying Migrations...
@@ -72,44 +58,24 @@ Saving successful migration to network...
   ... 0x22eafa16d629a5a0be06e447605ecef2748379760ba9aede4475565c376f6357
 Saving artifacts...
 ```
+
 Save the ID following `IncidentLog:` for use when setting your environment for running the server below.
 
-## Running the service manually
+## Running the UI service
 
-``` bash
-npm install
+Edit the `env` file to update the `CLIENT_CONTRACT_ADDRESS` line to match your IncidentLog id from above. Then run
 
-# create a new account and keys.
-# Save the passhrase and account file for next steps
-geth account new
-geth account list
-... output ...
-# Account #0: {d55010663ffd36aba75d2b29eba24015d6e20671} keystore:///Users/xxx/Library/Ethereum/keystore/UTC--2018-11-26T20-34-57.266338000Z--d55010663ffd36aba75d2b29eba24015d6e20671
-# Account #1: {fe00bb37a56282d33680542ae1cd6763660b4812} keystore:///Users/xxx/Library/Ethereum/keystore/UTC--2019-01-03T19-49-59.140692000Z--fe00bb37a56282d33680542ae1cd6763660b4812
-# Account #2: {1bf6a382b68444bf1578d0647bed98990367d5cd} keystore:///Users/xxx/Library/Ethereum/keystore/UTC--2019-01-11T20-12-23.689636000Z--1bf6a382b68444bf1578d0647bed98990367d5cd
-...
-
-# set up your environment
-export CLIENT_PASSPHRASE=password_for_account_created_above
-export CLIENT_KEYFILE=/Users/xxx/Library/Ethereum/keystore/UTC--2019-01-03T19-49-59.140692000Z--fe00bb37a56282d33680542ae1cd6763660b4812
-export CLIENT_CONTRACT_ADDRESS=id_from_above_output_from_truffle_deploy # address for the deployed contract
-export CLIENT_URL=mgmt.blockchain.vmware.com/blockchains/xxxxx/api/concord/eth
-export CLIENT_USER=dev@blockchain.local
-export CLIENT_PASSWORD=xxxxx
-
-go generate
-go build
-./incident-reporting
-```
+     make ui
+     make run-ui
 
 ### post an incident
 
-    curl --header "Content-Type: application/json"   --request POST   --data '{"Reporter":"0xFE00BB37A56282d33680542Ae1CD6763660b5555","Message":"automatic reporting"}' localhost/rest/log
+    curl --header "Content-Type: application/json"   --request POST   --data '{"Reporter":"0xFE00BB37A56282d33680542Ae1CD6763660b5555","Message":"automatic reporting"}' localhost:8080/rest/log
 
 ### check it
 
-    curl --header "Content-Type: application/json"   --request GET localhost/rest/log/0
+    curl --header "Content-Type: application/json"   --request GET localhost:8080/rest/log/0
 
 ### use the ui
 
-Open a browser to http://localhost/log
+Open a browser to http://localhost:8080/log

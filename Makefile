@@ -19,3 +19,13 @@ push-ui: ui
 push-truffle: truffle
 	docker tag incident-reporting-truffle:$(TAG) $(REPO)/incident-reporting-truffle:$(TAG)
 	docker push $(REPO)/incident-reporting-truffle:$(TAG)
+
+run-truffle:
+	docker run -it incident-reporting-truffle:$(TAG) bash
+
+run-ui:
+	docker run -it \
+		-v ${PWD}/keystore:/keystore \
+		--env-file env \
+		-p 8080:80 \
+		incident-reporting-ui:$(TAG)

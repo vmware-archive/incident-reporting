@@ -6,7 +6,6 @@ client
 incident-chain
 incident-reporting
 truffle.js
-env
 server
 generate/
 monitor/monitor
