@@ -1,8 +1,8 @@
 FROM golang:1.11.4
 
 WORKDIR /go/src/app
-COPY *.go /go/src/app/
-COPY public/ /go/src/app/public/
+COPY ui-server/*.go /go/src/app/
+COPY ui-server/public/ /go/src/app/public/
 
 RUN apt-get update && \
    apt-get install -y xz-utils
@@ -74,7 +74,7 @@ RUN set -ex \
 RUN npm install -g solc@0.4.24 && \
   ln -s /usr/local/bin/solcjs /bin/solc
 
-COPY contracts /go/src/app/contracts
+COPY truffle/contracts /go/src/app/contracts
 
 RUN go get -d -v ./... && \
   cd /go/src/github.com/ethereum/go-ethereum && \
