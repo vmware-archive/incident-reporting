@@ -1,5 +1,5 @@
 //go:generate solc --abi contracts/IncidentLog.sol  -o generate/
-//go:generate abigen --abi generate/contracts_IncidentLog_sol_IncidentLog.abi --type IncidentLog --pkg main --out IncidentLog.go
+//go:generate abigen --abi generate/IncidentLog.abi --type IncidentLog --pkg main --out IncidentLog.go
 package main
 
 import (

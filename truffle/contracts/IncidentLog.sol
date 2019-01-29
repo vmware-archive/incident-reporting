@@ -2,7 +2,6 @@ pragma solidity ^0.4.24;
 
 /// @title A log for recording incidents
 /// @author Tom Scanlan
-/// @dev Storage is costly and should only be used for critical data
 contract IncidentLog {
 
     struct Incident {
