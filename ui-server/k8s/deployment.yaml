@@ -44,7 +44,7 @@ spec:
         release: v1
     spec:
       containers:
-      - image: docker.io/tompscanlan/incident-reporting-ui:1.1
+      - image: docker.io/tompscanlan/incident-reporting-ui:1.5
         name: incident-reporting-ui
         # command:
         #   - sleep
