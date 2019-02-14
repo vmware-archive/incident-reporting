@@ -1,6 +1,4 @@
 CLIENT_URL=mgmt.blockchain.vmware.com/blockchains/therighturl/api/concord/eth
 CLIENT_USER=admin@blockchain.local
 CLIENT_PASSWORD=adminpassword
-CLIENT_PASSPHRASE=thepassphrase
-CLIENT_KEYFILE=/keystore/UTC--2019-01-28T19-16-50.876866000Z--562775ec26b832d761a391066b757b10779b4427
 CLIENT_CONTRACT_ADDRESS=0x5e675d47243caee6f01010473c108471f3c211b0

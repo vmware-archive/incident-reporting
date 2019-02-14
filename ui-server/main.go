@@ -3,6 +3,7 @@
 package main
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"html/template"
 	"log"
@@ -12,6 +13,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -19,8 +21,7 @@ import (
 
 // IncidentLogAddress is the deployed address of the incident log contract
 var IncidentLogAddress = common.HexToAddress(os.Getenv("CLIENT_CONTRACT_ADDRESS"))
-var keyfile = os.Getenv("CLIENT_KEYFILE")
-var passphrase = os.Getenv("CLIENT_PASSPHRASE")
+var privateKey *ecdsa.PrivateKey
 
 var user = os.Getenv("CLIENT_USER")
 var password = os.Getenv("CLIENT_PASSWORD")
@@ -30,25 +31,24 @@ var transactor *bind.TransactOpts
 var templateEngine *Template
 
 func init() {
-
-	file, err := os.Open(keyfile)
+	privateKey, err := crypto.GenerateKey()
 	if err != nil {
-		log.Fatalf("Failed to open %s: %v", keyfile, err)
+		log.Fatal(err)
 	}
 
-	transactor, err = bind.NewTransactor(file, passphrase)
+	transactor = bind.NewKeyedTransactor(privateKey)
 	if err != nil {
 		log.Fatalf("Failed to bind a new transctor using keyfile: %v", err)
 	}
 
 	// Create an IPC based RPC connection to a remote node
-	conn, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
+	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
 	}
 
 	// Instantiate the contract and display its name
-	ilog, err = NewIncidentLog(IncidentLogAddress, conn)
+	ilog, err = NewIncidentLog(IncidentLogAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
 	}
