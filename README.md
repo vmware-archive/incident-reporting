@@ -1,4 +1,16 @@
-# Incident reporting blockchain demo
+# Incident Reporting
+
+## Overview
+
+Security incidents are important to track so that all parties know the status of a breach and can respond in concert.
+Current methods to track incidents are generally paper-based manual processes.
+More recent systems are based on a centralized database with some web interface to interact with the record and response tracking.
+
+We propose that this does not work well enough in the scenario where security incidents may affect more than a single entity.
+For example, a security breach in the supply chain for a food manufacturer could result in several retail businesses with products on shelf that contain a pathogen.
+Current methods of notifying the proper authorities require essentially a phone tree to call all the correct parties, which then react as individuals or local committees.
+This system would allow all interested parties (retail, governmental, public) to see the incident as soon as it is reported.
+Additions to this system would allow cross-entity sharing of response, so all could know of the on-going reaction to this incident.
 
 ## Scenario
 
@@ -79,3 +91,15 @@ Edit the `env` file to update the `CLIENT_CONTRACT_ADDRESS` line to match your I
 ### use the ui
 
 Open a browser to http://localhost:8080/log
+
+## Contributing
+
+The incident-reporting project team welcomes contributions from the community. If you wish to contribute code and you have not
+signed our contributor license agreement (CLA), our bot will update the issue when you open a Pull Request. For any
+questions about the CLA process, please refer to our [FAQ](https://cla.vmware.com/faq). For more detailed information,
+refer to [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Copyright 2019 VMware, Inc.
+SPDX-License-Identifier: BSD-2
