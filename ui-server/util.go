@@ -5,12 +5,11 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/labstack/echo"
 )
 
 func getIndexLargestIncident() (int64, error) {
-	id, err := ilog.GetCount(&bind.CallOpts{})
+	id, err := session.GetCount()
 	if err != nil {
 		return 0, fmt.Errorf("Failed to get count of incidents: %v", err)
 	}
@@ -36,7 +35,8 @@ func lookupLatestIncident() (Incident, error) {
 func lookupIncident(id int64) (Incident, error) {
 	incident := Incident{}
 
-	sender, message, timestamp, err := ilog.GetIncident(&bind.CallOpts{}, big.NewInt(id))
+	log.Printf("trying to get incident id %d", id)
+	sender, message, timestamp, err := session.GetIncident(big.NewInt(id))
 	if err != nil {
 		log.Printf("Failed to get an incident with id %d: %v", id, err)
 		return incident, fmt.Errorf("Failed to get an incident with id %d: %v", id, err)

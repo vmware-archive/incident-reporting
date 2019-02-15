@@ -4,16 +4,20 @@ package main
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
+	"html"
 	"html/template"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -23,41 +27,66 @@ import (
 var IncidentLogAddress = common.HexToAddress(os.Getenv("CLIENT_CONTRACT_ADDRESS"))
 var privateKey *ecdsa.PrivateKey
 
-var user = os.Getenv("CLIENT_USER")
-var password = os.Getenv("CLIENT_PASSWORD")
+var user = html.EscapeString(os.Getenv("CLIENT_USER"))
+var password = html.EscapeString(os.Getenv("CLIENT_PASSWORD"))
 var url = os.Getenv("CLIENT_URL")
-var ilog *IncidentLog
-var transactor *bind.TransactOpts
+var session *IncidentLogSession
 var templateEngine *Template
+var chainID = big.NewInt(12349876)
 
 func init() {
-	privateKey, err := crypto.GenerateKey()
+	ks := keystore.NewKeyStore("./keydir", keystore.StandardScryptN, keystore.StandardScryptP)
+	account, err := ks.NewAccount(password)
+	log.Println("account: ", account)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	transactor = bind.NewKeyedTransactor(privateKey)
+	err = ks.Unlock(account, password)
 	if err != nil {
-		log.Fatalf("Failed to bind a new transctor using keyfile: %v", err)
+		log.Fatal(err)
 	}
 
 	// Create an IPC based RPC connection to a remote node
+	log.Printf("https://%s:%s@%s", user, password, url)
 	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
 	}
+	log.Println("client: ", client)
 
 	// Instantiate the contract and display its name
-	ilog, err = NewIncidentLog(IncidentLogAddress, client)
+	ilog, err := NewIncidentLog(IncidentLogAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
 	}
+	log.Println("incidentlog: ", ilog)
+
+	session = &IncidentLogSession{
+		Contract: ilog,
+		TransactOpts: bind.TransactOpts{
+			From: account.Address,
+			Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+				if address != account.Address {
+					return nil, errors.New("not authorized to sign this account")
+				}
+				signature, err := ks.SignTx(account, tx, chainID)
+				if err != nil {
+					return nil, err
+				}
+				return signature, nil
+			},
+		},
+	}
+	log.Println("session: ", session)
 
 	templateEngine = &Template{
 		templates: template.Must(template.ParseGlob("public/views/*.html")),
 	}
 }
+func connectToChain () {
 
+}
 func main() {
 	e := echo.New()
 	e.Renderer = templateEngine
@@ -93,7 +122,7 @@ func reportIncident(c echo.Context) (Incident, error) {
 	}
 
 	// file the report
-	_, err = ilog.ReportIncident(transactor, common.HexToAddress(incident.Reporter), incident.Message)
+	_, err = session.ReportIncident(common.HexToAddress(incident.Reporter), incident.Message)
 	if err != nil {
 		log.Printf("Failed to report an incident: %v", err)
 		return incident, err
