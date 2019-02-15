@@ -4,6 +4,7 @@ package main
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"html"
 	"html/template"
@@ -16,6 +17,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -28,15 +30,19 @@ var privateKey *ecdsa.PrivateKey
 var user = html.EscapeString(os.Getenv("CLIENT_USER"))
 var password = html.EscapeString(os.Getenv("CLIENT_PASSWORD"))
 var url = os.Getenv("CLIENT_URL")
-var ilog *IncidentLog
 var session *IncidentLogSession
 var templateEngine *Template
-var chainID = big.NewInt(1)
+var chainID = big.NewInt(12349876)
 
 func init() {
 	ks := keystore.NewKeyStore("./keydir", keystore.StandardScryptN, keystore.StandardScryptP)
 	account, err := ks.NewAccount(password)
 	log.Println("account: ", account)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ks.Unlock(account, password)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,7 +56,7 @@ func init() {
 	log.Println("client: ", client)
 
 	// Instantiate the contract and display its name
-	ilog, err = NewIncidentLog(IncidentLogAddress, client)
+	ilog, err := NewIncidentLog(IncidentLogAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
 	}
@@ -60,16 +66,16 @@ func init() {
 		Contract: ilog,
 		TransactOpts: bind.TransactOpts{
 			From: account.Address,
-			// Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-			// 	if address != account.Address {
-			// 		return nil, errors.New("not authorized to sign this account")
-			// 	}
-			// 	signature, err := ks.SignTx(account, tx, chainID)
-			// 	if err != nil {
-			// 		return nil, err
-			// 	}
-			// 	return signature, nil
-			// },
+			Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
+				if address != account.Address {
+					return nil, errors.New("not authorized to sign this account")
+				}
+				signature, err := ks.SignTx(account, tx, chainID)
+				if err != nil {
+					return nil, err
+				}
+				return signature, nil
+			},
 		},
 	}
 	log.Println("session: ", session)
@@ -78,7 +84,9 @@ func init() {
 		templates: template.Must(template.ParseGlob("public/views/*.html")),
 	}
 }
+func connectToChain () {
 
+}
 func main() {
 	e := echo.New()
 	e.Renderer = templateEngine
