@@ -1,3 +1,5 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-
 TAG ?= latest
 REPO ?= index.docker.io/tompscanlan
 
@@ -21,7 +23,7 @@ push-truffle: truffle
 	docker push $(REPO)/incident-reporting-truffle:$(TAG)
 
 run-truffle:
-	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset\n\n" && bash'
+	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -s 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
 
 run-ui:
 	docker run -it \

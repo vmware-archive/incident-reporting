@@ -1,3 +1,5 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-2
 FROM golang:1.11.4
 
 WORKDIR /go/src/app

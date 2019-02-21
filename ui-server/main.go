@@ -1,5 +1,7 @@
 //go:generate solc --abi contracts/IncidentLog.sol  -o generate/
 //go:generate abigen --abi generate/IncidentLog.abi --type IncidentLog --pkg main --out IncidentLog.go
+// Copyright 2019 VMware, Inc.
+// SPDX-License-Identifier: BSD-
 package main
 
 import (

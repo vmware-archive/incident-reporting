@@ -1,3 +1,5 @@
+# Copyright 2019 VMware, Inc.
+# SPDX-License-Identifier: BSD-2
 FROM node:chakracore-10.13.0
 
 WORKDIR /usr/src/app
