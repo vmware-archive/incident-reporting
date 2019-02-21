@@ -1,3 +1,5 @@
+// Copyright 2019 VMware, Inc.
+// SPDX-License-Identifier: BSD-2
 pragma solidity ^0.4.24;
 
 /// @title A log for recording incidents
