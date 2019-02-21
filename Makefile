@@ -23,11 +23,10 @@ push-truffle: truffle
 	docker push $(REPO)/incident-reporting-truffle:$(TAG)
 
 run-truffle:
-	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -s 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
+	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
 
 run-ui:
 	docker run -it \
-		-v ${PWD}/keystore:/keystore \
 		--env-file env \
 		-p 8080:80 \
 		incident-reporting-ui:$(TAG)
