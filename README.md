@@ -44,9 +44,9 @@ On detection of a security incident, a log entry should be made.
 ## Deploy the contracts
 
     export PRODUCTION_URL=https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth
-    docker run -it -e PRODUCTION_URL incident-reporting-truffle truffle deploy --network production --reset
+    make run-truffle
 
-Output:
+Sample output:
 
 ``` bash
 Compiling ./contracts/IncidentLog.sol...
@@ -75,9 +75,14 @@ Save the ID following `IncidentLog:` for use when setting your environment for r
 
 ## Running the UI service
 
-Edit the `env` file to update the `CLIENT_CONTRACT_ADDRESS` line to match your IncidentLog id from above. Then run
+Edit the `env` file to update
 
-     make ui
+* `CLIENT_CONTRACT_ADDRESS` line to match your IncidentLog id from above
+* `CLIENT_URL` to be the url to your blockchain's Ethereum API endpoint
+* `CLIENT_USER` and `CLIENT_PASSWORD` to be your credentials at that endpoint
+
+Then run
+
      make run-ui
 
 ### post an incident
@@ -91,6 +96,11 @@ Edit the `env` file to update the `CLIENT_CONTRACT_ADDRESS` line to match your I
 ### use the ui
 
 Open a browser to http://localhost:8080/log
+
+## Fast demo run through
+
+    # Edit run-demo.sh
+    ./run-demo.sh
 
 ## Contributing
 
