@@ -22,12 +22,12 @@ COPY ui-server/*.go /go/src/app/
 COPY ui-server/public/ /go/src/app/public/
 COPY truffle/contracts /go/src/app/contracts
 
-RUN go get -v ./... && \
-  cd /go/src/github.com/ethereum/go-ethereum && \
+RUN cd /go/src/github.com/ethereum/go-ethereum && \
   go install ./... && \
   cd /go/src/app && \
   mkdir generate && \
   go generate -v && \
+  go get -v ./... && \
   CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -v
 
 EXPOSE 80

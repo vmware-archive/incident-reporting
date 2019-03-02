@@ -1,26 +1,42 @@
 # Copyright 2019 VMware, Inc.
-# SPDX-License-Identifier: BSD-
-TAG ?= latest
-REPO ?= index.docker.io/tompscanlan
+# SPDX-License-Identifier: BSD-2
+
+# tag is the git tag or diff from the tag
+TAG := $(shell git --no-pager describe --tags --always)
+
+# or if empty, tag is the git revision
+ifeq ($(TAG),)
+TAG := $(shell git rev-parse --verify HEAD)
+endif
+
+# or if empty, tag is latest
+ifeq ($(TAG),)
+TAG := latest
+endif
+
+BASEREPO   ?= index.docker.io/tompscanlan
+UIIMG      := incident-reporting-ui:${TAG}
+TRUFFLEIMG := incident-reporting-truffle:${TAG}
+LATESTTAG  := latest
 
 all: containers
-
 containers: ui truffle
 push: push-ui push-truffle
+.PHONY: ui truffle push-ui push-truffle containers
 
 ui: ui-server/*.go ui-server/Dockerfile truffle/contracts/*.sol
-	docker build -t incident-reporting-ui:$(TAG) -f ui-server/Dockerfile .
+	docker build -t $(UIIMG) -f ui-server/Dockerfile .
+	docker tag $(UIIMG) $(BASEREPO)/$(UIIMG)
 
 truffle: truffle/package*.json truffle/Dockerfile truffle/contracts/*.sol truffle/migrations/*.js truffle/test/*.js truffle/*.js
-	docker build -t incident-reporting-truffle:$(TAG) -f truffle/Dockerfile .
+	docker build -t $(TRUFFLEIMG) -f truffle/Dockerfile .
+	docker tag $(TRUFFLEIMG) $(BASEREPO)/$(TRUFFLEIMG)
 
 push-ui: ui
-	docker tag incident-reporting-ui:$(TAG) $(REPO)/incident-reporting-ui:$(TAG)
-	docker push $(REPO)/incident-reporting-ui:$(TAG)
+	docker push $(BASEREPO)/$(UIIMG)
 
 push-truffle: truffle
-	docker tag incident-reporting-truffle:$(TAG) $(REPO)/incident-reporting-truffle:$(TAG)
-	docker push $(REPO)/incident-reporting-truffle:$(TAG)
+	docker push $(BASEREPO)/$(TRUFFLEIMG)
 
 run-truffle:
 	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
