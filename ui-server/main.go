@@ -39,7 +39,6 @@ var chainID = big.NewInt(12349876)
 func init() {
 	ks := keystore.NewKeyStore("./keydir", keystore.StandardScryptN, keystore.StandardScryptP)
 	account, err := ks.NewAccount(password)
-	log.Println("account: ", account)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -50,19 +49,16 @@ func init() {
 	}
 
 	// Create an IPC based RPC connection to a remote node
-	log.Printf("https://%s:%s@%s", user, password, url)
 	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
 	}
-	log.Println("client: ", client)
 
 	// Instantiate the contract and display its name
 	ilog, err := NewIncidentLog(IncidentLogAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
 	}
-	log.Println("incidentlog: ", ilog)
 
 	session = &IncidentLogSession{
 		Contract: ilog,
@@ -80,18 +76,19 @@ func init() {
 			},
 		},
 	}
-	log.Println("session: ", session)
 
 	templateEngine = &Template{
 		templates: template.Must(template.ParseGlob("public/views/*.html")),
 	}
 }
-func connectToChain () {
+func connectToChain() {
 
 }
 func main() {
 	e := echo.New()
 	e.Renderer = templateEngine
+
+	e.Static("/", "public/assets")
 
 	// Root level middleware
 	e.Use(middleware.Logger())
