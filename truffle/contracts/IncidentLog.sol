@@ -19,10 +19,13 @@ contract IncidentLog {
         uint timestamp
     );
 
+    event GotCalled();
+
     // A dynamically-sized array of `Incidents` structs.
     Incident[] public incidents;
 
     function reportIncident (address reporter, string memory message) public {
+        emit GotCalled();
         uint timestamp = now;
         incidents.push(
             Incident({
@@ -35,10 +38,12 @@ contract IncidentLog {
     }
 
     function getCount () public view returns (uint256) {
+        emit GotCalled();
         return incidents.length;
     }
 
     function getIncident (uint256 n) public view returns (address, string memory, uint) {
+        emit GotCalled();
         require(incidents.length != 0, "no log entries yet");
         require(n < incidents.length, "requested entry doesn't exist");
         Incident storage i = incidents[n];

@@ -1,5 +1,5 @@
 // Copyright 2019 VMware, Inc.
-// SPDX-License-Identifier: BSD-
+// SPDX-License-Identifier: BSD-2
 package main
 
 import (
@@ -22,7 +22,7 @@ func getIndexLargestIncident() (int64, error) {
 func lookupLatestIncident() (Incident, error) {
 	id, err := getIndexLargestIncident()
 	if err != nil {
-		log.Fatalf("Failed to get count of incidents: %v", err)
+		log.Printf("Failed to get count of incidents: %v", err)
 		return Incident{}, err
 	}
 

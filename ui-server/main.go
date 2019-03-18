@@ -1,7 +1,7 @@
 //go:generate solc --abi contracts/IncidentLog.sol  -o generate/
-//go:generate abigen --abi generate/IncidentLog.abi --type IncidentLog --pkg main --out IncidentLog.go
+//go:generate sh -c "abigen --abi generate/*IncidentLog.abi --type IncidentLog --pkg main --out IncidentLog.go"
 // Copyright 2019 VMware, Inc.
-// SPDX-License-Identifier: BSD-
+// SPDX-License-Identifier: BSD-2
 package main
 
 import (
@@ -16,6 +16,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/keystore"
 	"github.com/ethereum/go-ethereum/common"
@@ -37,24 +38,22 @@ var templateEngine *Template
 var chainID = big.NewInt(12349876)
 
 func init() {
-	ks := keystore.NewKeyStore("./keydir", keystore.StandardScryptN, keystore.StandardScryptP)
-	account, err := ks.NewAccount(password)
-	if err != nil {
-		log.Fatal(err)
-	}
+	var err error
+	var client *ethclient.Client
 
-	err = ks.Unlock(account, password)
-	if err != nil {
-		log.Fatal(err)
-	}
+	ks, account := initializeAndUnlockKeystore(password)
 
-	// Create an IPC based RPC connection to a remote node
-	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
+	// Create an IPC based RPC connection to standard url or a permissioned Concord endpoint
+	if user == "" || password == "" {
+		client, err = connectStandard(url)
+	} else {
+		client, err = connectConcord(user, password, url)
+	}
 	if err != nil {
 		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
 	}
 
-	// Instantiate the contract and display its name
+	// Instantiate the contract
 	ilog, err := NewIncidentLog(IncidentLogAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
@@ -81,9 +80,7 @@ func init() {
 		templates: template.Must(template.ParseGlob("public/views/*.html")),
 	}
 }
-func connectToChain() {
 
-}
 func main() {
 	e := echo.New()
 	e.Renderer = templateEngine
@@ -113,6 +110,15 @@ func main() {
 	e.Logger.Fatal(e.Start(":80"))
 }
 
+// func recieveEvents() {
+// 	query := ethereum.FilterQuery{
+// 		FromBlock: big.NewInt(0),
+// 		Addresses: []common.Address{
+// 			IncidentLogAddress,
+// 		},
+// 	}
+// 	// client.Filter
+// }
 func reportIncident(c echo.Context) (Incident, error) {
 	// collect input as an incident
 	incident, err := bindInput(c)
@@ -149,4 +155,32 @@ func getIncident(c echo.Context) (Incident, error) {
 	}
 
 	return incident, nil
+}
+
+func connectConcord(user string, password string, url string) (*ethclient.Client, error) {
+	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+func connectStandard(url string) (*ethclient.Client, error) {
+	client, err := ethclient.Dial(url)
+	if err != nil {
+		return nil, err
+	}
+	return client, nil
+}
+func initializeAndUnlockKeystore(password string) (*keystore.KeyStore, accounts.Account) {
+	ks := keystore.NewKeyStore("./keydir", keystore.StandardScryptN, keystore.StandardScryptP)
+	account, err := ks.NewAccount(password)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ks.Unlock(account, password)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return ks, account
 }

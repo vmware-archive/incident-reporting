@@ -12,6 +12,11 @@ module.exports = {
       port: 8545,
       network_id: "*"
     },
+    ganachetest: {
+      host: "ganache-test-incident-reporting",
+      port: 8545,
+      network_id: "*"
+    },
     devui: {
       host: "localhost",
       port: 7545,

@@ -1,5 +1,5 @@
 // Copyright 2019 VMware, Inc.
-// SPDX-License-Identifier: BSD-
+// SPDX-License-Identifier: BSD-2
 package main
 
 import (

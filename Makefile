@@ -19,6 +19,8 @@ UIIMG      := incident-reporting-ui:${TAG}
 TRUFFLEIMG := incident-reporting-truffle:${TAG}
 LATESTTAG  := latest
 
+GANACHE_CLI := ganache-test-incident-reporting
+
 all: containers
 containers: ui truffle
 push: push-ui push-truffle
@@ -46,3 +48,28 @@ run-ui:
 		--env-file env \
 		-p 8080:80 \
 		incident-reporting-ui:$(TAG)
+
+run-ui-ganache: ui truffle
+
+	# run a container for ganache-cli
+	- docker run --rm -d --name $(GANACHE_CLI) -P \
+		-e PRODUCTION_URL -it \
+		$(BASEREPO)/$(TRUFFLEIMG) \
+		node node_modules/ganache-cli/cli.js --host 0.0.0.0 -d -g 0
+
+	# deploy contract into ganache
+	- docker run --rm \
+		-it \
+		--link $(GANACHE_CLI) \
+		$(BASEREPO)/$(TRUFFLEIMG) \
+		truffle deploy --network ganachetest --reset
+
+	- docker run -it \
+		-e 'CLIENT_URL=ws://ganache-test-incident-reporting:8545' \
+		-e 'CLIENT_CONTRACT_ADDRESS=0xcfeb869f69431e42cdb54a4f4f105c19c080a601' \
+		--link $(GANACHE_CLI) \
+		-p 8080:80 \
+		$(BASEREPO)/$(UIIMG)
+
+	- docker stop $(GANACHE_CLI)
+	- docker rm $(GANACHE_CLI)
