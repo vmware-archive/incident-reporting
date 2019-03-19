@@ -1,0 +1,39 @@
+# docker-compose.yml
+version: '3'
+
+services:
+  ganache:
+    build:
+      context: .
+      dockerfile:  ./truffle/Dockerfile
+    image: tompscanlan/incident-reporting-truffle:latest
+    ports:
+    - "8545:8545"
+    networks:
+      - main
+    command: node node_modules/ganache-cli/cli.js --host 0.0.0.0 -d -g 0
+  deploy-contract:
+    build:
+      context: .
+      dockerfile:  ./truffle/Dockerfile
+    image: tompscanlan/incident-reporting-truffle:latest
+    networks:
+      - main
+    depends_on:
+      - ganache
+    command: truffle deploy --network ganache --reset
+  ui:
+    build:
+      context: .
+      dockerfile:  ./ui-server/Dockerfile
+    image: tompscanlan/incident-reporting-ui:latest
+    ports:
+      - "8080:80"
+    networks:
+      - main
+    environment:
+      - CLIENT_URL=ws://ganache:8545
+      - CLIENT_CONTRACT_ADDRESS=0xcfeb869f69431e42cdb54a4f4f105c19c080a601
+
+networks:
+  main:
