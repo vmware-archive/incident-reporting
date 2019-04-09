@@ -6,7 +6,7 @@ SPDX-License-Identifier: BSD-2
 
 <html>
 <head>
-    <link rel="stylesheet" href="https://unpkg.com/@clr/ui@1.0.3/clr-ui.min.css" />
+    <link rel="stylesheet" href="/clr-ui.min.css" />
 
 </head>
 
@@ -37,12 +37,14 @@ SPDX-License-Identifier: BSD-2
 
         <h2>Incidents</h2>
 
-        <table class="table">
+        <table class="table" ng-non-bindable>
                 <thead>
                     <tr>
                         <th>Reporter Account</th>
                         <th>Message</th>
                         <th>Timestamp</th>
+                        <th>Location</th>
+                        <th>Resolved?</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -50,10 +52,11 @@ SPDX-License-Identifier: BSD-2
                         <td>{{.Reporter}}</td>
                         <td>{{.Message}}</td>
                         <td>{{.Timestamp}}</td>
+                        <td>{{.Location}}</td>
+                        <td>{{.Resolved}}</td>
                     </tr>
                 </tbody>
             </table>
-   
         </div>
     </div>
 </div> 

@@ -5,7 +5,7 @@ SPDX-License-Identifier: BSD-2
 -->
 <html>
 <head>
-    <link rel="stylesheet" href="https://unpkg.com/@clr/ui@1.0.3/clr-ui.min.css" />
+    <link rel="stylesheet" href="/clr-ui.min.css" />
 
 </head>
 
@@ -33,7 +33,10 @@ SPDX-License-Identifier: BSD-2
             </nav>
             <div class="content-container">
                 <div class="content-area">
+                    <div ng-non-bindable>
 {{ . }}
+                    </div>
+                </div>
             </div>
         </div>
     </div>

@@ -22,10 +22,18 @@ contract("IncidentLog", function(accounts) {
     })
 
     it("should allow adding a message", async function() {
-        await il.reportIncident(accounts[0], "here is an entry");
+        await il.reportIncident(accounts[0], "here is an entry", "SanFran-DC");
         incident = await il.getIncident(0);
         count = await il.getCount()
         assert.equal("here is an entry", incident[1], "got wrong message");
         assert.equal(count, 1, "got wrong number of messages");
+    })
+
+    it("should allow being resolved", async function() {
+        await il.reportIncident(accounts[0], "entry 2", "SanFran-DC");
+        incident = await il.getIncident(1);
+        count = await il.getCount()
+        assert.equal(count, 2, "got wrong number of messages");
+        assert.equal("entry 2", incident[1], "got wrong message");
     })
 })

@@ -19,30 +19,58 @@ UIIMG      := incident-reporting-ui:${TAG}
 TRUFFLEIMG := incident-reporting-truffle:${TAG}
 LATESTTAG  := latest
 
+GANACHE_CLI := ganache-test-incident-reporting
+
 all: containers
 containers: ui truffle
 push: push-ui push-truffle
 .PHONY: ui truffle push-ui push-truffle containers
 
 ui: ui-server/*.go ui-server/Dockerfile truffle/contracts/*.sol
-	docker build -t $(UIIMG) -f ui-server/Dockerfile .
-	docker tag $(UIIMG) $(BASEREPO)/$(UIIMG)
+	TAG=$(TAG) docker-compose build ui
 
 truffle: truffle/package*.json truffle/Dockerfile truffle/contracts/*.sol truffle/migrations/*.js truffle/test/*.js truffle/*.js
-	docker build -t $(TRUFFLEIMG) -f truffle/Dockerfile .
-	docker tag $(TRUFFLEIMG) $(BASEREPO)/$(TRUFFLEIMG)
+	TAG=$(TAG) docker-compose build truffle
 
 push-ui: ui
-	docker push $(BASEREPO)/$(UIIMG)
+	TAG=$(TAG) docker-compose push ui
 
 push-truffle: truffle
-	docker push $(BASEREPO)/$(TRUFFLEIMG)
+	TAG=$(TAG) docker-compose push truffle
 
 run-truffle:
-	docker run -e PRODUCTION_URL -it incident-reporting-truffle:$(TAG) bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
+	@ TAG=$(TAG) docker-compose run truffle bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
+
+run-ui-ganache: ui truffle
+	# run a container for ganache-cli
+	- docker run --rm -d --name $(GANACHE_CLI) -P \
+		-e PRODUCTION_URL -it \
+		$(BASEREPO)/$(TRUFFLEIMG) \
+		node node_modules/ganache-cli/cli.js --host 0.0.0.0 -d -g 0
+
+	# deploy contract into ganache
+	- docker run --rm \
+		-it \
+		--link $(GANACHE_CLI) \
+		$(BASEREPO)/$(TRUFFLEIMG) \
+		truffle deploy --network ganachetest --reset
+
+	- docker run -it \
+		-e 'CLIENT_URL=ws://ganache-test-incident-reporting:8545' \
+		-e 'CLIENT_CONTRACT_ADDRESS=0xcfeb869f69431e42cdb54a4f4f105c19c080a601' \
+		--link $(GANACHE_CLI) \
+		-p 8080:80 \
+		$(BASEREPO)/$(UIIMG)
+
+	- docker stop $(GANACHE_CLI)
+	- docker rm $(GANACHE_CLI)
 
 run-ui:
-	docker run -it \
-		--env-file env \
-		-p 8080:80 \
-		incident-reporting-ui:$(TAG)
+	TAG=$(TAG) docker-compose up ui
+
+deploy-contract:
+	TAG=$(TAG) docker-compose up -d truffle
+	TAG=$(TAG) docker-compose up deploy-contract
+
+stop:
+	TAG=$(TAG) docker-compose down

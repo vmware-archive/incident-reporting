@@ -2,17 +2,25 @@
 
 ## Overview
 
-Security incidents are important to track so that all parties know the status of a breach and can respond in concert.
+Reporting and tracking of security incidents is important so that all parties affected by the event know the status and can respond in concert.
 Current methods to track incidents are generally paper-based manual processes.
-More recent systems are based on a centralized database with some web interface to interact with the record and response tracking.
+More recent systems are based on a centralized database with a web interface to report incidents and interact with them.
 
-We propose that this does not work well enough in the scenario where security incidents may affect more than a single entity.
+Manual incident reporting process is not amenable to scenarios where security incidents may affect more than a single entity or organization.
 For example, a security breach in the supply chain for a food manufacturer could result in several retail businesses with products on shelf that contain a pathogen.
-Current methods of notifying the proper authorities require essentially a phone tree to call all the correct parties, which then react as individuals or local committees.
-This system would allow all interested parties (retail, governmental, public) to see the incident as soon as it is reported.
-Additions to this system would allow cross-entity sharing of response, so all could know of the on-going reaction to this incident.
+Current methods of notifying the proper authorities and consumers require a phone tree to call all the correct parties, which then react as individuals or local committees.
 
-## Scenario
+This code repository implements a system that allows all interested parties (retail, government, public, etc) to
+
+* report incidents in an automated, real-time fashion
+* see the incident as soon as it is reported
+* respond in parallel
+
+Additionally, the record it resistant to malicious attacks and alteration of the records.
+
+## Scenarios this app helps
+
+### Pharma Data Sales
 
 MedCo is using large data sets that live in AWS s3 for a research application.  The results of the application should be kept encrypted and moved into the corporate private cloud for storage and later use.  This data will be sold to a large pharmaceutical company.
 
@@ -20,28 +28,38 @@ Loss of integrity for this data is critical to the business’s IP and should be
 
 It could be possible for an employee or a bad actor to thwart the privacy of this data and wipe record of that event taking place.  In order to ensure compliance, we need some method of tracking and preventing alteration of reported incidents.
 
-Blockchain allows for all parties to verify no incidents were reported, or that the incidents reported were handled correctly, and that no tampering of they system has occurred.
+This incident reporting application allows for all parties to verify that no incidents were reported, or that the incidents reported were handled correctly, and that no tampering or removal of incidents has occurred.
 
 Possible con: latency.  Will incidents need to be known in real time, or is some delay reasonable?
 
-On detection of a security incident, a log entry should be made.
+### Cross Enterprise Application Security Monitoring
 
-### Example incidents
+Big-Co has many smaller business units that develop and run business critical applications.
+Company wide IT has responsibility for deploying servers, networking equipment, hypervisors, platform stacks and other infrastructure.
 
-* VMs detected to be running vulnerable software
-* Ssh access to VM running the app
-* Breach of encryption key security
-* AppDefense identifies a problem
+Red-BU may be responsible for running their own application in production on top of IT furnished infrastructure, while Blue-BU develops apps with SRE-BU who then runs those apps on the IT provided infrastructure.
+IT is responsible for managing security incidents at the network and infrastructure levels, while SRE-BU is responsible for security incidents in Blue-Apps, and Red-BU product management is responsible for Red-Apps security incidents.
 
-## Install the dependencies
+Meanwhile, HR may need to be involved if an employee was involved in a security incident, and police/FBI may need to be involved if there is an external security threat.
+
+Security incidents here need to be globally reportable, reacted to by various parties with different concerns, and with some parties gaining advantage if they can alter or prevent recording incidents.
+
+This application of blockchain based incident reporting meets those requirements with regard to all teams, internal and external that can access the system.
+Additionally, no single entity needs to be in control of the infrastructure to support this action in concert.
+
+## Running the app
+
+### Install the dependencies
 
 * Docker
+* docker-compose
+* make
 
-## Build the ui and truffle containers
+### Build the ui and truffle containers
 
     make
 
-## Deploy the contracts
+### Deploy the contracts
 
     export PRODUCTION_URL=https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth
     make run-truffle
@@ -73,7 +91,7 @@ Saving artifacts...
 
 Save the ID following `IncidentLog:` for use when setting your environment for running the server below.
 
-## Running the UI service
+### Running the UI service
 
 Edit the `env` file to update
 
@@ -85,15 +103,15 @@ Then run
 
      make run-ui
 
-### post an incident
+#### post an incident
 
     curl --header "Content-Type: application/json"   --request POST   --data '{"Reporter":"0xFE00BB37A56282d33680542Ae1CD6763660b5555","Message":"automatic reporting"}' localhost:8080/rest/log
 
-### check it
+#### check it
 
     curl --header "Content-Type: application/json"   --request GET localhost:8080/rest/log/0
 
-### use the ui
+#### use the ui
 
 Open a browser to http://localhost:8080/log
 

@@ -16,19 +16,19 @@ RUN go get -v  \
   github.com/labstack/gommon \
   github.com/mattn/go-colorable \
   github.com/mattn/go-isatty \
-  github.com/valyala/fasttemplate
+  github.com/valyala/fasttemplate && \
+  cd /go/src/github.com/ethereum/go-ethereum && \
+  go install ./...
 
 COPY ui-server/*.go /go/src/app/
 COPY ui-server/public/ /go/src/app/public/
 COPY truffle/contracts /go/src/app/contracts
 
-RUN cd /go/src/github.com/ethereum/go-ethereum && \
-  go install ./... && \
-  cd /go/src/app && \
+RUN cd /go/src/app && \
   mkdir generate && \
   go generate -v && \
-  go get -v ./... && \
-  CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -v
+  go get -v ./...
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags="-w -s" -v
 
 EXPOSE 80
 

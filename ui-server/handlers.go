@@ -1,13 +1,30 @@
 // Copyright 2019 VMware, Inc.
-// SPDX-License-Identifier: BSD-
+// SPDX-License-Identifier: BSD-2
 package main
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 
 	"github.com/labstack/echo"
 )
+
+func getIndex(c echo.Context) error {
+	count, err := getIndexLargestIncident()
+	if err != nil {
+		count = 0
+	}
+
+	return c.Render(http.StatusOK, "main", template.HTML(
+		fmt.Sprintf(`
+	<H2>Welcome to the great Incident Reporting tool.</H2>
+	<p>This application leverages blockchain to enable co-auditing across a multi party
+	system.  Any member can whistle-blow on any other without fear of losing that record.
+	</p>
+	<p>We are currently hosting <b>%d</b> incidents</p>
+	`, count)))
+}
 
 // e.GET("/log", reportIncidentForm)
 func reportIncidentForm(c echo.Context) error {
@@ -17,6 +34,9 @@ func reportIncidentForm(c echo.Context) error {
 
   		<p>What happened:<br>
 		<input type="text" name="Message"></p>
+
+  		<p>Where at?<br>
+		<input type="text" name="Location"></p>
 
   		<p>Your account ID:<br>
 		<input type="text" name="Reporter"></p>
@@ -62,7 +82,7 @@ func getIncidentJSON(c echo.Context) error {
 	return c.JSON(http.StatusOK, incident)
 }
 
-// e.GET("/log/:id", getIncidents)
+// e.GET("/logs", getIncidents)
 func getIncidents(c echo.Context) error {
 	var incidents []Incident
 	var index int64

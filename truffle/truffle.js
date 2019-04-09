@@ -12,6 +12,11 @@ module.exports = {
       port: 8545,
       network_id: "*"
     },
+    ganache: {
+      host: "truffle",
+      port: 8545,
+      network_id: "*"
+    },
     devui: {
       host: "localhost",
       port: 7545,
