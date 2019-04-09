@@ -10,10 +10,13 @@ import (
 )
 
 // Incident is an entry on the IncidentLog blockchain
+// it should strictly follow the same struct in the IncidentLog.sol contract
 type Incident struct {
-	Reporter  string `json:"Reporter" form:"Reporter" query:"Reporter"` // what public id reported this incident?
-	Message   string `json:"Message" form:"Message" query:"Message"`    // log message for the incident
+	Reporter  string `json:"Reporter" form:"Reporter" query:"Reporter"`
+	Message   string `json:"Message" form:"Message" query:"Message"`
 	Timestamp uint64 `json:"Timestamp" form:"Timestamp" query:"Timestamp"`
+	Location  string `json:"Location" form:"Location" query:"Location"`
+	Resolved  bool   `json:"Resolved" form:"Resolved" query:"Resolved"`
 }
 
 // Template is a pointer to html templates

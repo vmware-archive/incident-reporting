@@ -10,3 +10,4 @@ server
 generate/
 monitor/monitor
 ui-server/ui-server
+ui-server/go.sum

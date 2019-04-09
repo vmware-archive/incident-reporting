@@ -12,8 +12,8 @@ module.exports = {
       port: 8545,
       network_id: "*"
     },
-    ganachetest: {
-      host: "ganache-test-incident-reporting",
+    ganache: {
+      host: "truffle",
       port: 8545,
       network_id: "*"
     },
