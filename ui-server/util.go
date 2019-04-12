@@ -123,7 +123,7 @@ func initBlockchainEventChannels(client *ethclient.Client) {
 
 func connectConcord(user string, password string, url string) (*ethclient.Client, error) {
 	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
-	client.
+	// client.
 	if err != nil {
 		return nil, err
 	}
