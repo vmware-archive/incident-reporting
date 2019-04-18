@@ -41,6 +41,10 @@ On detection of a security incident, a log entry should be made.
 
     make
 
+## Build and push containers to a specific docker repository
+
+  BASEREPO=harbor.demo.butterhead.net/tompscanlan make push
+
 ## Deploy the contracts
 
     export PRODUCTION_URL=https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth
