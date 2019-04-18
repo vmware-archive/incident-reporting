@@ -27,19 +27,19 @@ push: push-ui push-truffle
 .PHONY: ui truffle push-ui push-truffle containers
 
 ui: ui-server/*.go ui-server/Dockerfile truffle/contracts/*.sol
-	TAG=$(TAG) docker-compose build ui
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose build ui
 
 truffle: truffle/package*.json truffle/Dockerfile truffle/contracts/*.sol truffle/migrations/*.js truffle/test/*.js truffle/*.js
-	TAG=$(TAG) docker-compose build truffle
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose build truffle
 
 push-ui: ui
-	TAG=$(TAG) docker-compose push ui
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose push ui
 
 push-truffle: truffle
-	TAG=$(TAG) docker-compose push truffle
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose push truffle
 
 run-truffle:
-	@ TAG=$(TAG) docker-compose run truffle bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
+	@ BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose run truffle bash -c 'echo -e "#run this:\ntruffle deploy --network production --reset" && bash'
 
 run-ui-ganache: ui truffle
 	# run a container for ganache-cli
@@ -66,11 +66,11 @@ run-ui-ganache: ui truffle
 	- docker rm $(GANACHE_CLI)
 
 run-ui:
-	TAG=$(TAG) docker-compose up ui
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose up ui
 
 deploy-contract:
-	TAG=$(TAG) docker-compose up -d truffle
-	TAG=$(TAG) docker-compose up deploy-contract
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose up -d truffle
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose up deploy-contract
 
 stop:
-	TAG=$(TAG) docker-compose down
+	BASEREPO=$(BASEREPO) TAG=$(TAG) docker-compose down

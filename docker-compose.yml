@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile:  ./truffle/Dockerfile
-    image: tompscanlan/incident-reporting-truffle:${TAG:-latest}
+    image: ${BASEREPO:-tompscanlan}/incident-reporting-truffle:${TAG:-latest}
     ports:
     - "8545:8545"
     networks:
@@ -16,7 +16,7 @@ services:
     build:
       context: .
       dockerfile:  ./truffle/Dockerfile
-    image: tompscanlan/incident-reporting-truffle:${TAG:-latest}
+    image: ${BASEREPO:-tompscanlan}/incident-reporting-truffle:${TAG:-latest}
     networks:
       - main
     depends_on:
@@ -26,7 +26,7 @@ services:
     build:
       context: .
       dockerfile:  ./ui-server/Dockerfile
-    image: tompscanlan/incident-reporting-ui:${TAG:-latest}
+    image: ${BASEREPO:-tompscanlan}/incident-reporting-ui:${TAG:-latest}
     ports:
       - "8080:80"
     networks:
