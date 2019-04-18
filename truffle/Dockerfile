@@ -12,7 +12,4 @@ COPY truffle/migrations migrations
 COPY truffle/test test
 COPY truffle/truffle.js .
 
-
-EXPOSE 3000
-EXPOSE 8545
 CMD [ "bash" ]

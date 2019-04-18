@@ -17,10 +17,10 @@ metadata:
   labels:
     app: incident-reporting-ui
 data:
-  passphrase: YmFuZ2d1bWIw
-  user: ZGV2QGJsb2NrY2hhaW4ubG9jYWw=
-  password: Vk13YXJlMSE=
-  url: bWdtdC5ibG9ja2NoYWluLnZtd2FyZS5jb20vYmxvY2tjaGFpbnMvZGEyZjM4NzctN2M5Ni00ODk5LTgzMjktMjc2MWExNDg2ZmUwL2FwaS9jb25jb3JkL2V0aA==
+  passphrase: CHANGEME
+  user: CHANGEME
+  password: CHANGEME
+  url: CHANGEME
 ---
 apiVersion: extensions/v1beta1
 kind: Deployment
