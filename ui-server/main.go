@@ -8,11 +8,9 @@ package main
 
 import (
 	"crypto/ecdsa"
-	"errors"
 	"html"
 	"html/template"
 	"log"
-	"math/big"
 	"os"
 	"strconv"
 
@@ -20,20 +18,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
-// IncidentLogAddress is the deployed address of the incident log contract
-var IncidentLogAddress = common.HexToAddress(os.Getenv("CLIENT_CONTRACT_ADDRESS"))
 var privateKey *ecdsa.PrivateKey
-
-var user = html.EscapeString(os.Getenv("CLIENT_USER"))
-var password = html.EscapeString(os.Getenv("CLIENT_PASSWORD"))
-var url = os.Getenv("CLIENT_URL")
-var Session *IncidentLogSession
 
 var FireOpts *bind.WatchOpts
 var FireIncidentChan chan *IncidentLogFireIncident
@@ -45,49 +35,25 @@ var Calls int64
 var FireEventSubscription event.Subscription
 var CalledEventSubscription event.Subscription
 
-// VMware blockchain network ID
-var chainID = big.NewInt(12349876)
+var IncidentLogDapp *DApp
 
 func init() {
-	var err error
+	var user = html.EscapeString(os.Getenv("CLIENT_USER"))
+	var password = html.EscapeString(os.Getenv("CLIENT_PASSWORD"))
+	var url = os.Getenv("CLIENT_URL")
+	var contractHex = os.Getenv("CLIENT_CONTRACT_ADDRESS")
+	var contractAddress = common.HexToAddress(contractHex)
 
-	ks, account := initializeAndUnlockKeystore(password)
-
-	// Create an RPC connection to standard url or a permissioned Concord endpoint
-	if user == "" || password == "" {
-		client, err = connectStandard(url)
-	} else {
-		client, err = connectConcord(user, password, url)
+	if url == "" {
+		log.Fatalln("Must set CLIENT_URL environment variable")
 	}
-	if err != nil {
-		log.Fatalf("Failed to connect to the Ethereum client: %v", err)
-	}
-
-	// Instantiate the contract
-	ilog, err := NewIncidentLog(IncidentLogAddress, client)
-	if err != nil {
-		log.Fatalf("Failed to instantiate the IncidentLog contract: %v", err)
+	if contractHex == "" {
+		log.Fatalln("Must specify contract to operate on using CLIENT_CONTRACT_ADDRESS")
 	}
 
-	Session = &IncidentLogSession{
-		Contract: ilog,
-		TransactOpts: bind.TransactOpts{
-			From: account.Address,
-			Signer: func(signer types.Signer, address common.Address, tx *types.Transaction) (*types.Transaction, error) {
-				if address != account.Address {
-					return nil, errors.New("not authorized to sign this account")
-				}
-				signature, err := ks.SignTx(account, tx, chainID)
-				if err != nil {
-					return nil, err
-				}
-				return signature, nil
-			},
-		},
-	}
+	IncidentLogDapp = NewDApp(url, user, password, contractAddress)
+	IncidentLogDapp.CreateSession()
 
-	processOldBlockchainEvents(client)
-	initBlockchainEventChannels(client)
 }
 
 func main() {
@@ -114,7 +80,7 @@ func main() {
 	e.GET("/rest/log/:id", getIncidentJSON)
 	e.POST("/rest/log", reportIncidentJSON)
 
-	go handleBlockchainEvents()
+	// go handleBlockchainEvents()
 
 	e.Logger.Fatal(e.Start(":80"))
 }
@@ -127,7 +93,7 @@ func reportIncident(c echo.Context) (Incident, error) {
 	}
 
 	// file the report
-	_, err = Session.ReportIncident(common.HexToAddress(incident.Reporter), incident.Message, incident.Location)
+	_, err = IncidentLogDapp.Session.ReportIncident(common.HexToAddress(incident.Reporter), incident.Message, incident.Location)
 	if err != nil {
 		log.Printf("Failed to report an incident: %v", err)
 		return incident, err
@@ -164,7 +130,7 @@ func handleBlockchainEvents() {
 			log.Println("bailing from FireEventSubscription: ", err)
 			FireEventSubscription.Unsubscribe()
 			opts := watchOptsAtCurrentHead(client)
-			FireEventSubscription, err = Session.Contract.WatchFireIncident(opts, FireIncidentChan)
+			FireEventSubscription, err = IncidentLogDapp.Session.Contract.WatchFireIncident(opts, FireIncidentChan)
 			if err != nil {
 				log.Fatalf("Failed WatchFireIncident: %v", err)
 			}
@@ -172,7 +138,7 @@ func handleBlockchainEvents() {
 			log.Println("bailing from CalledEventSubscription: ", err)
 			CalledEventSubscription.Unsubscribe()
 			opts := watchOptsAtCurrentHead(client)
-			CalledEventSubscription, err = Session.Contract.WatchGotCalled(opts, GotCalledChan)
+			CalledEventSubscription, err = IncidentLogDapp.Session.Contract.WatchGotCalled(opts, GotCalledChan)
 			if err != nil {
 				log.Fatalf("Failed GotCalledChan: %v", err)
 			}

@@ -5,8 +5,10 @@ package main
 import (
 	"context"
 	"fmt"
+	"html"
 	"log"
 	"math/big"
+	"os"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -16,7 +18,7 @@ import (
 )
 
 func getIndexLargestIncident() (int64, error) {
-	id, err := Session.GetCount()
+	id, err := IncidentLogDapp.Session.GetCount()
 	if err != nil {
 		return 0, fmt.Errorf("Failed to get count of incidents: %v", err)
 	}
@@ -43,7 +45,7 @@ func lookupIncident(id int64) (Incident, error) {
 	incident := Incident{}
 
 	// log.Printf("trying to get incident id %d", id)
-	sender, message, timestamp, location, resolved, err := Session.GetIncident(big.NewInt(id))
+	sender, message, timestamp, location, resolved, err := IncidentLogDapp.Session.GetIncident(big.NewInt(id))
 	if err != nil {
 		log.Printf("Failed to get an incident with id %d: %v", id, err)
 		return incident, fmt.Errorf("Failed to get an incident with id %d: %v", id, err)
@@ -76,7 +78,7 @@ func processOldBlockchainEvents(client *ethclient.Client) {
 		Start: 0,
 		End:   &endblock,
 	}
-	pastFireIncidents, err := Session.Contract.FilterFireIncident(opt)
+	pastFireIncidents, err := IncidentLogDapp.Session.Contract.FilterFireIncident(opt)
 
 	if err != nil {
 		log.Fatalf("Failed to filter past logs: %v", err)
@@ -110,20 +112,33 @@ func initBlockchainEventChannels(client *ethclient.Client) {
 
 	opts := watchOptsAtCurrentHead(client)
 	var err error
-	FireEventSubscription, err = Session.Contract.WatchFireIncident(opts, FireIncidentChan)
+	FireEventSubscription, err = IncidentLogDapp.Session.Contract.WatchFireIncident(opts, FireIncidentChan)
 	if err != nil {
-		log.Fatalf("Failed WatchFireIncident: %v", err)
+		log.Fatalf("Failed WatchFireIncident Subscription: %v", err)
 	}
 
-	CalledEventSubscription, err = Session.Contract.WatchGotCalled(opts, GotCalledChan)
+	CalledEventSubscription, err = IncidentLogDapp.Session.Contract.WatchGotCalled(opts, GotCalledChan)
 	if err != nil {
 		log.Fatalf("Failed GotCalledChan: %v", err)
 	}
 }
 
+// NewClient will create an RPC connection to standard url or a permissioned Concord endpoint
+func NewClient() (*ethclient.Client, error) {
+
+	var user = html.EscapeString(os.Getenv("CLIENT_USER"))
+	var password = html.EscapeString(os.Getenv("CLIENT_PASSWORD"))
+	var url = os.Getenv("CLIENT_URL")
+
+	if user == "" || password == "" {
+		return connectStandard(url)
+	}
+
+	return connectConcord(user, password, url)
+}
+
 func connectConcord(user string, password string, url string) (*ethclient.Client, error) {
 	client, err := ethclient.Dial(fmt.Sprintf("https://%s:%s@%s", user, password, url))
-	// client.
 	if err != nil {
 		return nil, err
 	}
