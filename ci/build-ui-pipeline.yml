@@ -1,0 +1,56 @@
+resources:
+- name: incident-reporting
+  type: git
+  source:
+    uri: https://github.com/vmware-samples/incident-reporting.git
+    branch: master
+
+- name: truffle-docker-image
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-ui
+
+jobs:
+- name: publish
+  public: true
+  serial: true
+  plan:
+  - get: incident-reporting
+  - task: get a tag
+    config:
+      image_resource:
+        type: docker-image
+        source: {repository: golang, tag: 1.12.4}
+      platform: linux
+      inputs:
+        - name: incident-reporting
+      outputs:
+        - name: tag-holder
+      run:
+        path: sh
+        args:
+          - -c
+          - "cd incident-reporting; TAG=$( git --no-pager describe --tags --always ); TAG=${TAG:-`git rev-parse --verify HEAD`}; echo $TAG > ../tag-holder/tag; cat ../tag-holder/tag"
+  - task: check the tag
+    config:
+      image_resource:
+        type: docker-image
+        source: {repository: golang, tag: 1.12.4}
+      platform: linux
+      inputs:
+        - name: incident-reporting
+        - name: tag-holder
+      run:
+        path: sh
+        args:
+          - -c
+          - "pwd; ls -al; ls -al tag-holder; cat tag-holder/tag;"
+  - put: truffle-docker-image
+    params:
+      tag: tag-holder/tag
+      tag_as_latest: true
+      build: incident-reporting
+      dockerfile: incident-reporting/ui-server/Dockerfile
