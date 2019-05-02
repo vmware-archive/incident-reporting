@@ -1,0 +1,78 @@
+---
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: incident-reporting
+    release: v1
+  name: incident-reporting-ui
+spec:
+  progressDeadlineSeconds: 60
+  replicas: 2
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: incident-reporting-ui
+      release: v1
+  template:
+    metadata:
+      labels:
+        app: incident-reporting-ui
+        release: v1
+    spec:
+      imagePullSecrets:
+        - name: incident-reporting-registry-creds
+      containers:
+      - image: harbor.ir.butterhead.net:443/tscanlan/incident-reporting-ui:1.8
+        name: incident-reporting-ui
+        ports:
+        - containerPort: 80
+        resources:
+          limits:
+            cpu: 200m
+            memory: 128M
+          requests:
+            cpu: 100m
+            memory: 32M
+        env:
+          - name: CLIENT_URL
+            valueFrom:
+              secretKeyRef:
+               name: incident-reporting-secrets
+               key: url
+          - name: CLIENT_USER
+            valueFrom:
+              secretKeyRef:
+               name: incident-reporting-secrets
+               key: user
+          - name: CLIENT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+               name: incident-reporting-secrets
+               key: password
+          - name: CLIENT_PASSPHRASE
+            valueFrom:
+              secretKeyRef:
+               name: incident-reporting-secrets
+               key: passphrase
+          - name: CLIENT_CONTRACT_ADDRESS
+            valueFrom:
+              secretKeyRef:
+               name: incident-reporting-secrets
+               key: contractAddres
+      restartPolicy: Always
+    livenessProbe:
+      httpGet:
+        path: /
+        port: 80
+        httpHeaders:
+        - name: Custom-Header
+          value: Awesome
+      initialDelaySeconds: 5
+      periodSeconds: 3
+    redinessProbe:
+      httpGet:
+        path: /
+        port: 80
+      initialDelaySeconds: 5
+      periodSeconds: 3

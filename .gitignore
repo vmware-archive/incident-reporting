@@ -10,3 +10,5 @@ server
 generate/
 monitor/monitor
 ui-server/ui-server
+__pycache__/
+env.local
