@@ -1,14 +1,15 @@
 resources:
 - name: incident-reporting
   type: git
+  icon: github-face
   source:
     uri: https://github.com/vmware-samples/incident-reporting.git
     branch: master
 
 - name: truffle-docker-image
   type: docker-image
+  icon: docker
   source:
-    email: ((docker-hub-email))
     username: ((docker-hub-username))
     password: ((docker-hub-password))
     repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-ui

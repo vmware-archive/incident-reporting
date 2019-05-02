@@ -1,14 +1,15 @@
 resources:
 - name: incident-reporting
   type: git
+  icon: github-face
   source:
     uri: https://github.com/vmware-samples/incident-reporting.git
     branch: master
 
 - name: truffle-docker-image
   type: docker-image
+  icon: docker
   source:
-    email: ((docker-hub-email))
     username: ((docker-hub-username))
     password: ((docker-hub-password))
     repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-truffle
@@ -50,7 +51,7 @@ jobs:
           - "pwd; ls -al; ls -al tag-holder; cat tag-holder/tag;"
   - put: truffle-docker-image
     params:
-      tag: tag-holder/tag
+      tag_file: tag-holder/tag
       tag_as_latest: true
       build: incident-reporting
       dockerfile: incident-reporting/truffle/Dockerfile
