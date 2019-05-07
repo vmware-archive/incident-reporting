@@ -71,10 +71,11 @@ jobs:
           image_resource:
             type: docker-image
             source:
-              repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-ui
+              repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-truffle
           run:
             path: sh
             args:
+              - -x
               - -c
               - "/usr/local/bin/truffle test"
 
