@@ -61,6 +61,7 @@ jobs:
     plan:
       - get: truffle-docker-image
         trigger: true
+        passed: [truffle-image]
       - get: version
         params: {bump: patch}
       - put: version
@@ -81,8 +82,12 @@ jobs:
 
   - name: kubernetes-deploy-production
     plan:
-      - get: incident-reporting
+      - get: truffle-docker-image
         trigger: true
+        passed: [truffle-tests]
+      - get: ui-docker-image
+        trigger: true
+        passed: [ui-image]
       - put: kubernetes-production
         params:
           kubectl: apply -f incident-reporting/deployment/kubernetes
