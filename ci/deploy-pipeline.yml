@@ -9,6 +9,11 @@ resource_types:
   source:
     repository: "concourse/semver-resource"
     tag: "1.0.2"
+- name: s3
+  type: docker-image
+  source:
+    repository: "concourse/s3-resource"
+    tag: "1.0.2"
 resources:
 - name: kubernetes-production
   type: kubernetes
@@ -34,7 +39,23 @@ resources:
     password: ((docker-hub-password))
     repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-ui
 
-- name: version
+- name: contract-address-s3
+  type: s3
+  source:
+    bucket: applications
+    endpoint: ((s3-semver-endpoint))
+    regexp: contract-address-(.*).tgz
+    # access_key_id: test
+    access_key_id: ((s3-semver-key-id))
+    secret_access_key: ((s3-semver-access-key))
+    disable_ssl: true
+    # skip_download: true
+    # disable_multipart: true
+    # use_v2_signing: false
+    initial_path: contract-address-0.0.0.tgz
+    initial_content_text: "testing"
+
+- name: contract-version
   icon: weather-sunset
   type: semver
   source:
@@ -42,109 +63,170 @@ resources:
     initial_version: ((s3-semver-initial-version))
     endpoint: ((s3-semver-endpoint))
     bucket: ((s3-semver-bucket))
-    key: ((s3-semver-key))
+    key: incident-reporting-contract-version
     access_key_id: ((s3-semver-key-id))
     secret_access_key: ((s3-semver-access-key))
     disable_ssl: ((s3-semver-disable-ssl))
 
-- name: incident-reporting
+- name: incident-reporting-truffle
   icon: github-face
   type: git
   source:
     uri: https://github.com/vmware-samples/incident-reporting.git
     branch: ((code-branch))
+    paths:
+      - truffle
+- name: incident-reporting-ui
+  icon: github-face
+  type: git
+  source:
+    uri: https://github.com/vmware-samples/incident-reporting.git
+    branch: ((code-branch))
+    paths:
+      - ui-server
 
+- name: incident-reporting-kubernetes
+  icon: github-face
+  type: git
+  source:
+    uri: https://github.com/vmware-samples/incident-reporting.git
+    branch: ((code-branch))
+    paths:
+      - deployment/kubernetes/*.yml
+      - deployment/kubernetes/*.yaml
 
 jobs:
 
   - name: truffle-tests
     plan:
-      - get: truffle-docker-image
+      - get: incident-reporting-truffle
         trigger: true
-        passed: [truffle-image]
-      - get: version
-        params: {bump: patch}
-      - put: version
-        params: {file: version/version}
       - task: run truffle tests
         config:
+          inputs:
+            - name: incident-reporting-truffle
           platform: linux
           image_resource:
             type: docker-image
             source:
-              repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-truffle
+              repository: node
+              tag: chakracore-10.13.0
           run:
             path: sh
             args:
               - -x
               - -c
-              - "/usr/local/bin/truffle test"
+              - "pwd; ls -al ; cd incident-reporting-truffle/truffle; ls -al; npm install && npm install -g truffle@4.1.14 && truffle test"
 
-  - name: kubernetes-deploy-production
+  - name: deploy-ui
     plan:
-      - get: truffle-docker-image
+      - get: incident-reporting-kubernetes
         trigger: true
-        passed: [truffle-tests]
-      - get: ui-docker-image
-        trigger: true
-        passed: [ui-image]
       - put: kubernetes-production
         params:
-          kubectl: apply -f incident-reporting/deployment/kubernetes
+          kubectl: apply -f incident-reporting-kubernetes/deployment/kubernetes
           wait_until_ready_selector: app=incident-reporting
 
-  - name: truffle-image
+  - name: deploy-contract
     public: true
     serial: true
     plan:
-    - get: incident-reporting
-      trigger: true
-    - task: get a tag
-      config:
-        image_resource:
-          type: docker-image
-          source: {repository: golang, tag: 1.12.4}
-        platform: linux
-        inputs:
-          - name: incident-reporting
-        outputs:
-          - name: tag-holder
-        run:
-          path: sh
-          args:
-            - -c
-            - "cd incident-reporting; TAG=$( git --no-pager describe --tags --always ); TAG=${TAG:-`git rev-parse --verify HEAD`}; echo $TAG > ../tag-holder/tag; cat ../tag-holder/tag"
-    - put: truffle-docker-image
-      params:
-        tag_file: tag-holder/tag
-        tag_as_latest: true
-        build: incident-reporting
-        dockerfile: incident-reporting/truffle/Dockerfile
+      - get: contract-version
+        params: {bump: patch}
+      - get: truffle-docker-image
+        trigger: true
+      - task: run truffle deploy
+        image: truffle-docker-image
+        config:
+          platform: linux
+          inputs:
+            - name: contract-version
+          outputs:
+            - name: deploy-output
+          run:
+            path: sh
+            args:
+              - -xc
+              - |
+                # set -eu
+                version=$(cat contract-version/version)
+                build_dir=$PWD;
+                mkdir $build_dir/work
 
-  - name: ui-image
+                cd /usr/src/app;
+                truffle deploy --network production --reset | tee $build_dir/work/output;
+                cd $build_dir
+                ls -alrth;
+                echo "should see deploy-output"
+
+                cat work/output | sed -e '/IncidentLog:/!d; s/^.*: /contract=/' > work/contract
+                tar -cvzf deploy-output/contract-address-${version}.tgz -C work .
+                ls -alrt deploy-output
+
+          params:
+            PRODUCTION_URL: "https://((client_user)):((client_password))@((client_url))"
+      - aggregate:
+        - put: contract-address-s3
+          params:
+            file: deploy-output/contract-address-*.tgz
+        - put: contract-version
+          params: {bump: patch}
+
+
+  - name: build-image-ui
     public: true
     serial: true
     plan:
-    - get: incident-reporting
+    - get: incident-reporting-ui
       trigger: true
-    - task: get a tag
+    - task: get source code tag
       config:
         image_resource:
           type: docker-image
           source: {repository: golang, tag: 1.12.4}
         platform: linux
         inputs:
-          - name: incident-reporting
+          - name: incident-reporting-ui
         outputs:
           - name: tag-holder
         run:
           path: sh
           args:
             - -c
-            - "cd incident-reporting; TAG=$( git --no-pager describe --tags --always ); TAG=${TAG:-`git rev-parse --verify HEAD`}; echo $TAG > ../tag-holder/tag; cat ../tag-holder/tag"
+            - "cd incident-reporting-ui; TAG=$( git --no-pager describe --tags --always ); TAG=${TAG:-`git rev-parse --verify HEAD`}; echo $TAG > ../tag-holder/tag; cat ../tag-holder/tag"
     - put: ui-docker-image
       params:
         tag_file: tag-holder/tag
         tag_as_latest: true
-        build: incident-reporting
-        dockerfile: incident-reporting/ui-server/Dockerfile
+        build: incident-reporting-ui
+        dockerfile: incident-reporting-ui/ui-server/Dockerfile
+
+  - name: build-image-truffle
+    public: true
+    serial: true
+    plan:
+    - get: incident-reporting-truffle
+      trigger: true
+      passed: [truffle-tests]
+    - task: get source code tag
+      config:
+        image_resource:
+          type: docker-image
+          source: {repository: golang, tag: 1.12.4}
+        platform: linux
+        inputs:
+          - name: incident-reporting-truffle
+        outputs:
+          - name: tag-holder
+        run:
+          path: sh
+          args:
+            - -c
+            - "cd incident-reporting-truffle; TAG=$( git --no-pager describe --tags --always ); TAG=${TAG:-`git rev-parse --verify HEAD`}; echo $TAG > ../tag-holder/tag; cat ../tag-holder/tag"
+
+    - put: truffle-docker-image
+      params:
+        tag_file: tag-holder/tag
+        tag_as_latest: true
+        build: incident-reporting-truffle
+        dockerfile: incident-reporting-truffle/truffle/Dockerfile
