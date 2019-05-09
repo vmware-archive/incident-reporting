@@ -192,25 +192,54 @@ jobs:
                   url: `printf $url | base64 | tr -d '\n'`
                   contractAddres: `printf $c | base64`
                 EOF
-                cat secret/secret.yaml | od -c
-      - put: kubernetes-production
-        params:
-          kubectl: apply -f secret/secret.yaml  -n ansible-namespace
-      - put: kubernetes-production
-        params:
-          kubectl: create secret docker-registry incident-reporting-registry-cred --docker-server=((docker-hub-registry)) --docker-username=((docker-hub-username)) --docker-password=((docker-hub-password))
 
-  - name: deploy-ui
+                config='{ "auths": { "((docker-hub-registry))": { "username": "((docker-hub-username))", "password": "((docker-hub-password))"} } }'
+                cat <<-EOFR > secret/reg-secret.yaml
+                ---
+                apiVersion: v1
+                data:
+                  .dockerconfigjson: `printf %s $config | base64 | tr -d '\n'`
+                kind: Secret
+                metadata:
+                  name: incident-reporting-registry-cred
+                type: kubernetes.io/dockerconfigjson
+                EOFR
+
+                # cat secret/secret.yaml | od -c
+                cat secret/reg-secret.yaml | od -c
+      - put: kubernetes-production
+        params:
+          kubectl: apply -f secret/secret.yaml -f secret/reg-secret.yaml -n ansible-namespace
+      # - put: kubernetes-production
+      #   params:
+      #     kubectl: create secret docker-registry incident-reporting-registry-cred --docker-server=((docker-hub-registry)) --docker-username=((docker-hub-username)) --docker-password=((docker-hub-password))
+
+  - name: deploy-last-built-ui
     plan:
       - aggregate:
         - get: contract-address-s3
           passed: [deploy-contract]
         - get: incident-reporting-kubernetes
           trigger: true
+        - get: ui-version
+          trigger: true
+          passed: [build-image-ui]
+      - put: kubernetes-production
+        params:
+          kubectl: set image -n ansible-namespace deployment/incident-reporting-ui incident-reporting-ui=harbor.ir.butterhead.net:443/incident-reporting/incident-reporting-ui:$(cat ui-version/version | tr -d '\n')
+          wait_until_ready_selector: app=incident-reporting-ui
+
+  - name: deploy-latest-ui
+    plan:
+      - aggregate:
+        - get: contract-address-s3
+          passed: [deploy-contract]
+        - get: incident-reporting-kubernetes
       - put: kubernetes-production
         params:
           kubectl: apply -f incident-reporting-kubernetes/deployment/kubernetes -n ansible-namespace
           wait_until_ready_selector: app=incident-reporting-ui
+
 
   - name: deploy-contract
     public: true
@@ -277,21 +306,21 @@ jobs:
     - put: ui-version
       params: {bump: patch}
 
-  # - name: build-image-truffle
-  #   public: true
-  #   serial: true
-  #   plan:
-  #   - aggregate:
-  #     - get: truffle-version
-  #       params: {bump: patch}
-  #     - get: incident-reporting-truffle
-  #       trigger: true
-  #       passed: [truffle-tests]
-  #   - put: truffle-docker-image
-  #     params:
-  #       tag_file: tag-holder/tag
-  #       tag_as_latest: true
-  #       build: incident-reporting-truffle
-  #       dockerfile: incident-reporting-truffle/truffle/Dockerfile
-  #   - put: truffle-version
-  #     params: {bump: patch}
+  - name: build-image-truffle
+    public: true
+    serial: true
+    plan:
+    - aggregate:
+      - get: truffle-version
+        params: {bump: patch}
+      - get: incident-reporting-truffle
+        trigger: true
+        passed: [truffle-tests]
+    - put: truffle-docker-image
+      params:
+        tag_file: tag-holder/tag
+        tag_as_latest: true
+        build: incident-reporting-truffle
+        dockerfile: incident-reporting-truffle/truffle/Dockerfile
+    - put: truffle-version
+      params: {bump: patch}
