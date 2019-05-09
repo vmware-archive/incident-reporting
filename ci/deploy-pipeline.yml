@@ -19,7 +19,7 @@ resources:
   type: kubernetes
   icon: application-import
   source:
-    server: https://api.incident-reporting-724e9f80-6826-11e9-b4e4-0e7c7c059320.57197a32-43f3-46f6-bd80-bc65267b6d7c.vke-user.com
+    server: ((generated_cluster_address))
     namespace: ((generated_serviceaccount_namespace))
     token: ((generated_serviceaccount_token))
     certificate_authority: ((generated_serviceaccount_ca))
@@ -30,7 +30,7 @@ resources:
   source:
     username: ((docker-hub-username))
     password: ((docker-hub-password))
-    repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-ui
+    repository: ((docker-hub-registry))/((docker-hub-orgname))/incident-reporting-truffle
 - name: ui-docker-image
   type: docker-image
   icon: docker
@@ -180,7 +180,7 @@ jobs:
       - put: kubernetes-production
         params:
           kubectl: apply -f incident-reporting-kubernetes/deployment/kubernetes -n ansible-namespace
-          wait_until_ready_selector: app=incident-reporting
+          wait_until_ready_selector: app=incident-reporting-ui
 
   - name: deploy-contract
     public: true

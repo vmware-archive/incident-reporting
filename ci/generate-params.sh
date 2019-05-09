@@ -9,6 +9,9 @@ marker="generated_"
 serviceaccount=${1?"must pass a service account"}
 namespace=${2:-default}
 
+# get cluster address
+cluster_address=$( kubectl cluster-info | sed '/master/!d; s/^.*at //' | sed $'s,\x1b\\[[0-9;]*[a-zA-Z],,g' )
+
 # look up the service account secret
 serviceaccount_secret=$( kubectl get serviceaccount -n $namespace $serviceaccount -o json | jq -r '.secrets[0].name' )
 
@@ -22,6 +25,7 @@ express() {
     echo -e "${marker}${1}: |\n${indented}"
 }
 
+express cluster_address
 express serviceaccount_token
 express serviceaccount_ca
 express serviceaccount_namespace
