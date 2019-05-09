@@ -23,17 +23,32 @@ spec:
       imagePullSecrets:
         - name: incident-reporting-registry-creds
       containers:
-      - image: harbor.ir.butterhead.net:443/tscanlan/incident-reporting-ui:1.8
+      - image: harbor.ir.butterhead.net:443/incident-reporting/incident-reporting-ui:latest
         name: incident-reporting-ui
         ports:
         - containerPort: 80
-        resources:
-          limits:
-            cpu: 200m
-            memory: 128M
-          requests:
-            cpu: 100m
-            memory: 32M
+        # resources:
+        #   limits:
+        #     cpu: 200m
+        #     memory: 128M
+        #   requests:
+        #     cpu: 100m
+        #     memory: 32M
+        # livenessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 80
+        #     httpHeaders:
+        #     - name: Custom-Header
+        #       value: Awesome
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 3
+        # readinessProbe:
+        #   httpGet:
+        #     path: /
+        #     port: 80
+        #   initialDelaySeconds: 5
+        #   periodSeconds: 3
         env:
           - name: CLIENT_URL
             valueFrom:
@@ -50,29 +65,9 @@ spec:
               secretKeyRef:
                name: incident-reporting-secrets
                key: password
-          - name: CLIENT_PASSPHRASE
-            valueFrom:
-              secretKeyRef:
-               name: incident-reporting-secrets
-               key: passphrase
           - name: CLIENT_CONTRACT_ADDRESS
             valueFrom:
               secretKeyRef:
                name: incident-reporting-secrets
                key: contractAddres
       restartPolicy: Always
-    livenessProbe:
-      httpGet:
-        path: /
-        port: 80
-        httpHeaders:
-        - name: Custom-Header
-          value: Awesome
-      initialDelaySeconds: 5
-      periodSeconds: 3
-    redinessProbe:
-      httpGet:
-        path: /
-        port: 80
-      initialDelaySeconds: 5
-      periodSeconds: 3

@@ -44,7 +44,7 @@ resources:
   source:
     bucket: applications
     endpoint: ((s3-semver-endpoint))
-    regexp: contract-address-(.*).tgz
+    regexp: contract-address-(.*)
     # access_key_id: test
     access_key_id: ((s3-semver-key-id))
     secret_access_key: ((s3-semver-access-key))
@@ -52,7 +52,7 @@ resources:
     # skip_download: true
     # disable_multipart: true
     # use_v2_signing: false
-    initial_path: contract-address-0.0.0.tgz
+    initial_path: contract-address-0.0.0
     initial_content_text: "testing"
 
 - name: contract-version
@@ -118,13 +118,68 @@ jobs:
               - -c
               - "pwd; ls -al ; cd incident-reporting-truffle/truffle; ls -al; npm install && npm install -g truffle@4.1.14 && truffle test"
 
-  - name: deploy-ui
+  - name: create-secrets
+    serial: true
     plan:
-      - get: incident-reporting-kubernetes
-        trigger: true
+      - aggregate:
+        - get: contract-address-s3
+          trigger: true
+        - get: incident-reporting-kubernetes
+      - task: create secret reseource
+        config:
+          inputs:
+            - name: contract-address-s3
+            - name: incident-reporting-kubernetes
+          outputs:
+            - name: secret
+          platform: linux
+          image_resource:
+            type: docker-image
+            source:
+              repository: alpine
+              tag:  3.9
+          run:
+            path: sh
+            args:
+              - -xc
+              - |
+                ls -al
+                u=((client_user))
+                p=((client_password))
+                url=((client_url))
+
+                ls -alrt contract-address-s3/
+                cat contract-address-s3/contract-address-*
+                c=$(cat contract-address-s3/contract-address-*)
+
+                cat <<-EOF > secret/secret.yaml
+                ---
+                apiVersion: v1
+                kind: Secret
+                metadata:
+                  name: incident-reporting-secrets
+                  labels:
+                    app: incident-reporting-ui
+                data:
+                  user: `printf $u | base64`
+                  password: `printf $p | base64`
+                  url: `printf $url | base64`
+                  contractAddres: `printf $c | base64`
+                EOF
+                cat secret/secret.yaml
       - put: kubernetes-production
         params:
-          kubectl: apply -f incident-reporting-kubernetes/deployment/kubernetes
+          kubectl: apply -f secret/secret.yaml  -n ansible-namespace
+
+  - name: deploy-ui
+    plan:
+      - aggregate:
+        - get: contract-version
+        - get: incident-reporting-kubernetes
+          trigger: true
+      - put: kubernetes-production
+        params:
+          kubectl: apply -f incident-reporting-kubernetes/deployment/kubernetes -n ansible-namespace
           wait_until_ready_selector: app=incident-reporting
 
   - name: deploy-contract
@@ -159,8 +214,7 @@ jobs:
                 ls -alrth;
                 echo "should see deploy-output"
 
-                cat work/output | sed -e '/IncidentLog:/!d; s/^.*: /contract=/' > work/contract
-                tar -cvzf deploy-output/contract-address-${version}.tgz -C work .
+                cat work/output | sed -e '/IncidentLog:/!d; s/^.*: //' > deploy-output/contract-address-${version}
                 ls -alrt deploy-output
 
           params:
@@ -168,11 +222,13 @@ jobs:
       - aggregate:
         - put: contract-address-s3
           params:
-            file: deploy-output/contract-address-*.tgz
+            file: deploy-output/contract-address-*
         - put: contract-version
           params: {bump: patch}
 
 
+## Container builds
+## -----------------
   - name: build-image-ui
     public: true
     serial: true
