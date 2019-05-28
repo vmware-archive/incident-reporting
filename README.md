@@ -37,15 +37,26 @@ On detection of a security incident, a log entry should be made.
 
 * Docker
 
-## Build the ui and truffle containers
+## Building and running
+
+### Using Concourse for CI/CD
+
+Create good credentials file by using the sample in the `ci` directory.
+
+    fly -t ir login  -c https://concourse.ir1.example.com
+    fly -t ir sp -c ci/deploy-pipeline.yml -p deploy-incident-reporting -l ci/credentials.yml
+
+### Locally, no CI/CD
+
+#### Build the ui and truffle containers
 
     make
 
-## Build and push containers to a specific docker repository
+#### Build and push containers to a specific docker repository
 
   BASEREPO=harbor.demo.butterhead.net/tompscanlan make push
 
-## Deploy the contracts
+#### Deploy the contracts
 
     export PRODUCTION_URL=https://dev@blockchain.local:XXXX@$@mgmt.blockchain.vmware.com/blockchains/XXXX/api/concord/eth
     make run-truffle
@@ -77,7 +88,7 @@ Saving artifacts...
 
 Save the ID following `IncidentLog:` for use when setting your environment for running the server below.
 
-## Running the UI service
+#### Running the UI service
 
 Edit the `env` file to update
 
